@@ -21,7 +21,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:3000/users/signin", {
+      const res = await fetch("http://localhost:3000/auth/signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include", // ← needed for cookie-session
