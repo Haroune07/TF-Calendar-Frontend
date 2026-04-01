@@ -1,0 +1,99 @@
+.page {
+    min-height: 100vh;
+    background-color: #f4f4f5;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 2rem;
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.appName {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #6366f1;
+}
+
+.logoutBtn {
+    padding: 0.45rem 1rem;
+    background: transparent;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    color: #374151;
+    transition: background-color 0.15s;
+}
+
+.logoutBtn:hover {
+    background-color: #f9fafb;
+}
+
+.main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    padding: 2.5rem 2rem;
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background-color: #6366f1;
+    color: #fff;
+    font-size: 1.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.welcome {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #111;
+    margin: 0;
+    text-align: center;
+}
+
+.info {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    border-top: 1px solid #f3f4f6;
+    padding-top: 1.25rem;
+}
+
+.infoRow {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: #374151;
+}
+
+.infoLabel {
+    font-weight: 600;
+    color: #6b7280;
+}
