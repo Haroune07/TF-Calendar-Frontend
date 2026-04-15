@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import styles from "../styles/HomePage.module.css";
+import Calendar from "../components/Calendar";
 
 export default function HomePage() {
   const { user, logout } = useAuth();
@@ -28,7 +29,9 @@ export default function HomePage() {
       </header>
 
       <main className={styles.main}>
-        <h1>Bonjour, {user!.email} 👋</h1>
+        <h1>Bonjour, {user!.email} </h1>
+        <Calendar />
+        
       </main>
     </div>
   );
