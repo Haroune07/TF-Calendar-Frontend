@@ -5,7 +5,7 @@ import AuthProvider from "./context/AuthContext";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import NotFoundPage from "./pages/NotFoundPage";
-
+import Layout from "./components/Layout";
 function App() {
   return (
     <BrowserRouter>
@@ -16,7 +16,9 @@ function App() {
             path="/"
             element={
               <ProtectedRoute>
+                <Layout>
                 <HomePage />
+                </Layout>
               </ProtectedRoute>
             }
           />
