@@ -8,6 +8,46 @@ export type UserDTO = {
   calendrierId?: number;
 };
 
+// export type ProgrammableDTO = {
+//   id: number;
+//   nom: string;
+//   description?: string;
+//   dateDepart: string;
+//   userId: number;
+//   calendrierId?: number | null;
+//   type: "activite" | "evenement";
+//   dureeHeures?: number;
+//   priorite?: "URGENT" | "IMPORTANCE_MOYENNE" | "IMPORTANCE_BASSE";
+//   dureeJours?: number;
+// };
+
+export type ActiviteDTO = {
+  id: number;
+  nom: string;
+  description?: string;
+  dateDepart: string;
+  userId: number;
+  calendrierId?: number | null;
+  type: "activite";
+  dureeHeures: number;       
+  priorite: "URGENT" | "IMPORTANCE_MOYENNE" | "IMPORTANCE_BASSE";
+};
+
+export type EvenementDTO = {
+  id: number;
+  nom: string;
+  description?: string;
+  dateDepart: string;
+  userId: number;
+  calendrierId?: number | null;
+  type: "evenement";
+  dureeJours: number;     
+};
+
+export type ProgrammableDTO = ActiviteDTO | EvenementDTO;
+
+
+
 export type AuthCredentials = { email: string; password?: string; nomComplet?: string };
 
 async function parseError(response: Response): Promise<Error> {
@@ -70,5 +110,10 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
+  },
+
+  async getProgrammableByUser(userId: number): Promise<ProgrammableDTO[]> {
+    return fetchAPI(`/programmable/user/${userId}`);
   }
+
 };

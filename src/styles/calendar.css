@@ -1,89 +1,160 @@
-﻿/* CONTAINER  */
+﻿/* CONTAINER */
 .calendar-container {
-    width: 900px;
-    margin: 40px auto;
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
-    overflow: hidden;
-    font-family: Arial, sans-serif;
-  }
-  
-  /* HEADER */
-  .calendar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
-    border-bottom: 1px solid #eee;
-  }
-  
-  .calendar-header h2 {
-    font-size: 16px;
-    font-weight: 600;
-    color: #333;
-  }
-  
-  .calendar-header button {
-    border: none;
-    background: none;
-    font-size: 16px;
-    cursor: pointer;
-    color: #666;
-  }
-  
-  /* GRID */
-  .calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-  }
-  
-  /* JOURS SEMAINE */
-  .header-day {
-    text-align: center;
-    font-size: 12px;
-    color: #999;
-    padding: 10px 0;
-    border-bottom: 1px solid #eee;
-  }
-  
-  /* CASE JOUR */
-  .day {
-    height: 90px;
-    border-right: 1px solid #f0f0f0;
-    border-bottom: 1px solid #f0f0f0;
-    padding: 8px;
-    text-align: right;
-    font-size: 13px;
-    color: #666;
-    position: relative;
-  }
-  
-  /* supprimer bordure droite fin ligne */
-  .day:nth-child(7n) {
-    border-right: none;
-  }
-  
-  /* HOVER */
-  .day:hover {
-    background-color: #fafafa;
-    cursor: pointer;
-  }
-  
-  /* AUJOURD’HUI */
-  .today {
-    background-color: #f0f6ff;
-    color: #2a6df4;
-    font-weight: bold;
-  }
-  
-  /* POINT EVENEMENT */
-  .event-dot {
-    width: 6px;
-    height: 6px;
-    background-color: #2a6df4;
-    border-radius: 50%;
-    position: absolute;
-    bottom: 6px;
-    right: 6px;
-  }
+  width: 100%;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+/* HEADER */
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.calendar-header h2 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+  text-transform: capitalize;
+}
+
+.calendar-header button {
+  border: none;
+  background: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #64748b;
+  padding: 4px 10px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.calendar-header button:hover {
+  background: #f1f5f9;
+}
+
+/* GRID */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+/* WEEK DAY HEADERS */
+.header-day {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* DAY CELL */
+.day {
+  min-height: 100px;
+  border-right: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 6px;
+  font-size: 13px;
+  color: #64748b;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: background 0.1s;
+}
+
+.day.empty {
+  background: #fafafa;
+}
+
+.day:nth-child(7n) {
+  border-right: none;
+}
+
+.day:hover:not(.empty) {
+  background-color: #f8fafc;
+  cursor: pointer;
+}
+
+/* DAY NUMBER */
+.day-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+  font-weight: 500;
+  align-self: flex-end;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* TODAY */
+.today .day-number {
+  background-color: #2563eb;
+  color: white;
+  font-weight: 700;
+}
+
+.today {
+  background-color: #eff6ff;
+}
+
+/* EVENTS CONTAINER */
+.day-programmables {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+/* EVENT PILL */
+.event-pill {
+  font-size: 10px;
+  font-weight: 500;
+  color: white;
+  padding: 2px 5px;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.event-pill:hover {
+  opacity: 0.85;
+}
+
+/* LEGEND */
+.calendar-legend {
+  display: flex;
+  gap: 1.5rem;
+  padding: 10px 16px;
+  border-top: 1px solid #f0f0f0;
+  justify-content: flex-end;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
