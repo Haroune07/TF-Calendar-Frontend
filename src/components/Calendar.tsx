@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import "../styles/calendar.css";
 
 export default function Calendar() {
@@ -63,7 +63,7 @@ export default function Calendar() {
         {days.map((day, index) =>
           day ? (
             <div
-              key={day}
+              key={index}
               className={`day ${isToday(day) ? "today" : ""}`}
             >
               {day}
