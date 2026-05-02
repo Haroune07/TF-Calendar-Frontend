@@ -1,41 +1,35 @@
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import styles from "../styles/HomePage.module.css";
+import { useState } from "react";
+import { useRouteLoaderData } from "react-router-dom";
+import type { UserDTO } from "../services/api";
 import Calendar from "../components/Calendar";
 
 export default function HomePage() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    try {
-      await fetch("http://localhost:3000/users/signout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } finally {
-      logout();
-      navigate("/login", { replace: true });
-    }
-  };
+  const user = useRouteLoaderData("root") as UserDTO;
+  const [view, setView] = useState<"week" | "month">("month");
 
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <span className={styles.appName}>MonApp</span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%' }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 style={{ margin: 0 }}>Bonjour, {user?.email}</h1>
         <div>
-          <button style={{ marginRight: '10px' }} onClick={() => navigate('/profile')}>Mon Profil</button>
-          <button className={styles.logoutBtn} onClick={handleLogout}>
-            Se déconnecter
+          <button 
+            onClick={() => setView("month")} 
+            style={{ fontWeight: view === "month" ? "bold" : "normal", marginRight: "10px" }}
+          >
+            Vue Mois
+          </button>
+          <button 
+            onClick={() => setView("week")}
+            style={{ fontWeight: view === "week" ? "bold" : "normal" }}
+          >
+            Vue Semaine
           </button>
         </div>
       </header>
 
-      <main className={styles.main}>
-        <h1>Bonjour, {user!.email} </h1>
-        <Calendar />
-        
-      </main>
+      <div style={{ flex: 1, backgroundColor: 'white', padding: '1rem', borderRadius: '8px' }}>
+        <Calendar /> 
+      </div>
     </div>
   );
 }

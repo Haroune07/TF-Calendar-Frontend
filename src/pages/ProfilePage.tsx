@@ -1,74 +1,54 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { Form, useRouteLoaderData, useActionData, useNavigation } from "react-router-dom";
+import { api } from "../services/api";
+import type { UserDTO } from "../services/api";
+
+export async function profileAction({ request }: any) {
+  const formData = await request.formData();
+  const id = formData.get("id");
+  const nomComplet = formData.get("nomComplet");
+  const omnivoxDA = formData.get("omnivoxDA");
+
+  if (!nomComplet) return { error: "Le nom complet est requis." };
+
+  try {
+    const data = {
+      nomComplet,
+      omnivoxDA: omnivoxDA ? parseInt(omnivoxDA, 10) : null,
+    };
+    await api.updateProfile(Number(id), data);
+    return { success: "Profil mis à jour avec succès !" };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
 
 export default function ProfilePage() {
-  const { user, login } = useAuth();
-  const navigate = useNavigate();
-
-  const [nomComplet, setNomComplet] = useState(user?.nomComplet || "");
-  const [omnivoxDA, setOmnivoxDA] = useState(user?.omnivoxDA || "");
-  const [message, setMessage] = useState("");
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-
-    try {
-      const res = await fetch(`http://localhost:3000/users/${user.id}`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nomComplet,
-          omnivoxDA: omnivoxDA ? parseInt(omnivoxDA.toString()) : null,
-        }),
-      });
-
-      if (res.ok) {
-        const updatedUser = await res.json();
-        login(updatedUser); // Update AuthContext state
-        setMessage("Profil mis à jour avec succès !");
-      } else {
-        setMessage("Erreur lors de la mise à jour.");
-      }
-    } catch (err) {
-      setMessage("Erreur de connexion au serveur.");
-    }
-  };
+  const user = useRouteLoaderData("root") as UserDTO;
+  const actionData = useActionData() as any;
+  const { state } = useNavigation();
 
   return (
     <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
-      <button onClick={() => navigate("/")} style={{ marginBottom: "1rem" }}>
-        ← Retour à l'accueil
-      </button>
-
       <h2>Profil Utilisateur</h2>
       <p><strong>Email :</strong> {user?.email}</p>
       
-      {message && <div style={{ color: "green", marginBottom: "1rem" }}>{message}</div>}
+      {actionData?.success && <div style={{ color: "green" }}>{actionData.success}</div>}
+      {actionData?.error && <div style={{ color: "red" }}>{actionData.error}</div>}
 
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", maxWidth: "300px", gap: "1rem" }}>
+      <Form method="post" style={{ display: "flex", flexDirection: "column", maxWidth: "300px", gap: "1rem", marginTop: "1rem" }}>
+        <input type="hidden" name="id" value={user.id} />
         <div>
           <label>Nom Complet :</label><br/>
-          <input 
-            type="text" 
-            value={nomComplet} 
-            onChange={(e) => setNomComplet(e.target.value)} 
-          />
+          <input type="text" name="nomComplet" defaultValue={user.nomComplet} required />
         </div>
-
         <div>
           <label>DA Omnivox :</label><br/>
-          <input 
-            type="number" 
-            value={omnivoxDA} 
-            onChange={(e) => setOmnivoxDA(e.target.value)} 
-          />
+          <input type="number" name="omnivoxDA" defaultValue={user.omnivoxDA || ""} />
         </div>
-
-        <button type="submit" style={{ marginTop: "1rem" }}>Sauvegarder</button>
-      </form>
+        <button type="submit" disabled={state === "submitting"}>
+          {state === "submitting" ? "Sauvegarde..." : "Sauvegarder"}
+        </button>
+      </Form>
     </div>
   );
 }

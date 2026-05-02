@@ -1,4 +1,4 @@
-import { Outlet, Link } from "react-router-dom";
+import { Outlet, Link, Form } from "react-router-dom";
 import styles from "./MainLayout.module.css";
 
 export default function MainLayout() {
@@ -11,10 +11,12 @@ export default function MainLayout() {
           <Link to="/profile" className={styles.link}>Mon Profil</Link>
           <Link to="#" className={styles.link}>Mes Tâches</Link>
           <Link to="#" className={styles.link}>Paramètres</Link>
-          {/* We will add a real logout button or link in Phase 2/3 */}
-          <Link to="/logout" className={styles.link} style={{ marginTop: 'auto' }}>
-            Se déconnecter
-          </Link>
+          
+          <Form action="/logout" method="post" style={{ marginTop: 'auto' }}>
+            <button type="submit" className={styles.link} style={{ background: 'transparent', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left' }}>
+              Se déconnecter
+            </button>
+          </Form>
         </nav>
       </aside>
       
