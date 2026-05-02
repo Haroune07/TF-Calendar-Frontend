@@ -57,11 +57,11 @@ export const api = {
   },
 
   async getCurrentUser(): Promise<UserDTO> {
-    return fetchAPI("/users/whoami");
+    return fetchAPI("/auth/whoami");
   },
 
   async logout(): Promise<void> {
-    return fetchAPI("/users/signout", { method: "POST" });
+    return fetchAPI("/auth/signout", { method: "POST" });
   },
 
   async updateProfile(id: number, data: Partial<UserDTO>): Promise<UserDTO> {

@@ -74,3 +74,51 @@
 .link:hover {
   text-decoration: underline;
 }
+
+
+
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.5rem 0 1rem;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+ 
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--color-border);
+}
+ 
+.googleButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-bg-card);
+  color: var(--color-text-main);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 0.2s, box-shadow 0.2s, border-color 0.2s;
+  cursor: pointer;
+}
+ 
+.googleButton:hover {
+  background-color: var(--color-bg-main);
+  border-color: #aaa;
+  box-shadow: var(--shadow-sm);
+}
+ 
+.googleButton:active {
+  background-color: #f1f3f4;
+}
