@@ -23,9 +23,12 @@ export default function HomePage() {
     <div className={styles.page}>
       <header className={styles.header}>
         <span className={styles.appName}>MonApp</span>
-        <button className={styles.logoutBtn} onClick={handleLogout}>
-          Se déconnecter
-        </button>
+        <div>
+          <button style={{ marginRight: '10px' }} onClick={() => navigate('/profile')}>Mon Profil</button>
+          <button className={styles.logoutBtn} onClick={handleLogout}>
+            Se déconnecter
+          </button>
+        </div>
       </header>
 
       <main className={styles.main}>
