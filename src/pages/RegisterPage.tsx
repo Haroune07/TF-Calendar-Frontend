@@ -1,5 +1,6 @@
 import { Form, redirect, useActionData, useNavigation, Link } from "react-router-dom";
 import { api } from "../services/api";
+import styles from "../styles/AuthPage.module.css";
 
 export async function registerAction({ request }: any) {
   const formData = await request.formData();
@@ -21,37 +22,37 @@ export default function RegisterPage() {
   const isSubmitting = navigation.state === "submitting";
 
   return (
-    <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px', fontFamily: 'sans-serif' }}>
-      <h2>Créer un compte</h2>
-      
-      {actionData?.error && (
-        <div style={{ color: 'red', marginBottom: '15px' }}>
-          {actionData.error}
-        </div>
-      )}
-
-      <Form method="post" style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-        <div>
-          <label>Nom Complet :</label><br/>
-          <input type="text" name="nomComplet" required style={{ width: '100%' }} />
-        </div>
-        <div>
-          <label>Email :</label><br/>
-          <input type="email" name="email" required style={{ width: '100%' }} />
-        </div>
-        <div>
-          <label>Mot de passe :</label><br/>
-          <input type="password" name="password" required style={{ width: '100%' }} />
-        </div>
+    <div className={styles.page}>
+      <div className={styles.card}>
+        <h1 className={styles.title}>Créer un compte</h1>
         
-        <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Création en cours..." : "S'inscrire"}
-        </button>
-      </Form>
-      
-      <p style={{ marginTop: '20px' }}>
-        Déjà un compte ? <Link to="/login">Se connecter</Link>
-      </p>
+        <Form method="post" className={styles.form}>
+          <div className={styles.field}>
+            <label htmlFor="nomComplet">Nom Complet</label>
+            <input id="nomComplet" type="text" name="nomComplet" placeholder="John Doe" required />
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="email">Courriel</label>
+            <input id="email" type="email" name="email" placeholder="votre@email.com" required />
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="password">Mot de passe</label>
+            <input id="password" type="password" name="password" placeholder="••••••••" required />
+          </div>
+          
+          {actionData?.error && (
+            <p className={styles.error}>{actionData.error}</p>
+          )}
+
+          <button type="submit" className={`btn-primary ${styles.button}`} disabled={isSubmitting}>
+            {isSubmitting ? "Création en cours..." : "S'inscrire"}
+          </button>
+        </Form>
+        
+        <p className={styles.footer}>
+          Déjà un compte ? <Link to="/login" className={styles.link}>Se connecter</Link>
+        </p>
+      </div>
     </div>
   );
 }

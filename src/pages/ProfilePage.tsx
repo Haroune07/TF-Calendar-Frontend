@@ -1,6 +1,7 @@
 import { Form, useRouteLoaderData, useActionData, useNavigation } from "react-router-dom";
 import { api } from "../services/api";
 import type { UserDTO } from "../services/api";
+import styles from "../styles/ProfilePage.module.css";
 
 export async function profileAction({ request }: any) {
   const formData = await request.formData();
@@ -28,26 +29,28 @@ export default function ProfilePage() {
   const { state } = useNavigation();
 
   return (
-    <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
-      <h2>Profil Utilisateur</h2>
-      <p><strong>Email :</strong> {user?.email}</p>
+    <div className={styles.page}>
+      <h2 className={styles.title}>Profil Utilisateur</h2>
+      <p className={styles.subtitle}><strong>Email :</strong> {user?.email}</p>
       
-      {actionData?.success && <div style={{ color: "green" }}>{actionData.success}</div>}
-      {actionData?.error && <div style={{ color: "red" }}>{actionData.error}</div>}
+      {actionData?.success && <div className={styles.success}>{actionData.success}</div>}
+      {actionData?.error && <div className={styles.error}>{actionData.error}</div>}
 
-      <Form method="post" style={{ display: "flex", flexDirection: "column", maxWidth: "300px", gap: "1rem", marginTop: "1rem" }}>
+      <Form method="post" className={styles.form}>
         <input type="hidden" name="id" value={user.id} />
-        <div>
-          <label>Nom Complet :</label><br/>
-          <input type="text" name="nomComplet" defaultValue={user.nomComplet} required />
+        <div className={styles.field}>
+          <label htmlFor="nomComplet">Nom Complet</label>
+          <input id="nomComplet" type="text" name="nomComplet" defaultValue={user.nomComplet} required />
         </div>
-        <div>
-          <label>DA Omnivox :</label><br/>
-          <input type="number" name="omnivoxDA" defaultValue={user.omnivoxDA || ""} />
+        <div className={styles.field}>
+          <label htmlFor="omnivoxDA">DA Omnivox</label>
+          <input id="omnivoxDA" type="number" name="omnivoxDA" defaultValue={user.omnivoxDA || ""} />
         </div>
-        <button type="submit" disabled={state === "submitting"}>
-          {state === "submitting" ? "Sauvegarde..." : "Sauvegarder"}
-        </button>
+        <div className={styles.buttonContainer}>
+          <button type="submit" className="btn-success" disabled={state === "submitting"}>
+            {state === "submitting" ? "Sauvegarde en cours..." : "Sauvegarder"}
+          </button>
+        </div>
       </Form>
     </div>
   );

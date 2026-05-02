@@ -1,6 +1,6 @@
 import { Form, redirect, useActionData, useNavigation, Link } from "react-router-dom";
 import { api } from "../services/api";
-import styles from "../styles/LoginPage.module.css";
+import styles from "../styles/AuthPage.module.css";
 
 export async function loginAction({ request }: any) {
   const formData = await request.formData();
@@ -33,6 +33,7 @@ export default function LoginPage() {
               type="email"
               name="email"
               autoComplete="email"
+              placeholder="votre@email.com"
               required
             />
           </div>
@@ -44,18 +45,19 @@ export default function LoginPage() {
               type="password"
               name="password"
               autoComplete="current-password"
+              placeholder="••••••••"
               required
             />
           </div>
 
           {actionData?.error && <p className={styles.error}>{actionData.error}</p>}
 
-          <button type="submit" className={styles.button} disabled={loading}>
+          <button type="submit" className={`btn-primary ${styles.button}`} disabled={loading}>
             {loading ? "Connexion..." : "Se connecter"}
           </button>
         </Form>
-        <p style={{ marginTop: '20px', textAlign: 'center' }}>
-          Pas encore de compte ? <Link to="/register">Créer un compte</Link>
+        <p className={styles.footer}>
+          Pas encore de compte ? <Link to="/register" className={styles.link}>Créer un compte</Link>
         </p>
       </div>
     </div>

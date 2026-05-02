@@ -2,32 +2,33 @@ import { useState } from "react";
 import { useRouteLoaderData } from "react-router-dom";
 import type { UserDTO } from "../services/api";
 import Calendar from "../components/Calendar";
+import styles from "../styles/HomePage.module.css";
 
 export default function HomePage() {
   const user = useRouteLoaderData("root") as UserDTO;
   const [view, setView] = useState<"week" | "month">("month");
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ margin: 0 }}>Bonjour, {user?.email}</h1>
-        <div>
+    <div className={styles.page}>
+      <header className={styles.header}>
+        <h1 className={styles.title}>Bonjour, {user?.nomComplet || user?.email}</h1>
+        <div className={styles.toggleGroup}>
           <button 
+            className={`${styles.toggleBtn} ${view === "month" ? styles.active : ""}`}
             onClick={() => setView("month")} 
-            style={{ fontWeight: view === "month" ? "bold" : "normal", marginRight: "10px" }}
           >
-            Vue Mois
+            Mois
           </button>
           <button 
+            className={`${styles.toggleBtn} ${view === "week" ? styles.active : ""}`}
             onClick={() => setView("week")}
-            style={{ fontWeight: view === "week" ? "bold" : "normal" }}
           >
-            Vue Semaine
+            Semaine
           </button>
         </div>
       </header>
 
-      <div style={{ flex: 1, backgroundColor: 'white', padding: '1rem', borderRadius: '8px' }}>
+      <div className={styles.calendarWrapper}>
         <Calendar /> 
       </div>
     </div>

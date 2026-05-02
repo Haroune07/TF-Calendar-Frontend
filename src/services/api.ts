@@ -41,7 +41,7 @@ async function fetchAPI(endpoint: string, options: RequestInit = {}) {
 
 export const api = {
   async login(credentials: AuthCredentials): Promise<UserDTO> {
-    return fetchAPI("/users/signin", {
+    return fetchAPI("/auth/signin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(credentials),
@@ -49,7 +49,7 @@ export const api = {
   },
 
   async register(data: AuthCredentials): Promise<UserDTO> {
-    return fetchAPI("/users/signup", {
+    return fetchAPI("/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -57,7 +57,7 @@ export const api = {
   },
 
   async getCurrentUser(): Promise<UserDTO> {
-    return fetchAPI("/users/me");
+    return fetchAPI("/users/whoami");
   },
 
   async logout(): Promise<void> {
