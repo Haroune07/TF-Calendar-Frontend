@@ -4,7 +4,7 @@ import HomePage from "./pages/HomePage";
 import LoginPage, { loginAction } from "./pages/LoginPage";
 import RegisterPage, { registerAction } from "./pages/RegisterPage";
 import ProfilePage, { profileAction } from "./pages/ProfilePage";
-import InvitationsPage from "./pages/InvitationsPage";
+import InvitationsPage, { invitationAction, invitationsLoader } from "./pages/InvitationsPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import { api } from "./services/api";
 
@@ -51,7 +51,7 @@ export const router = createBrowserRouter(
       <Route element={<MainLayout />} loader={requireAuthLoader} id="root">
         <Route index element={<HomePage />} />
         <Route path="profile" element={<ProfilePage />} action={profileAction} />
-        <Route path="invitations" element={<InvitationsPage />} />
+        <Route path="invitations" element={<InvitationsPage />} loader={invitationsLoader} action={invitationAction} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

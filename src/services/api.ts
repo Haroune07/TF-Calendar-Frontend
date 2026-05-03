@@ -21,6 +21,23 @@ export type UserDTO = {
 //   dureeJours?: number;
 // };
 
+export type InvitationDTO = {
+  id: number;
+  senderId: number;
+  invitedUserId: number;
+  statut: string;
+  type: string;
+  sentAt: string;
+  sender?: {
+    id: number;
+    nomComplet: string;
+  }
+  invitedUser?: {
+    id: number;
+    nomComplet: string;
+  }
+};
+
 export type ActiviteDTO = {
   id: number;
   nom: string;
@@ -114,6 +131,26 @@ export const api = {
 
   async getProgrammableByUser(userId: number): Promise<ProgrammableDTO[]> {
     return fetchAPI(`/programmable/user/${userId}`);
-  }
+  },
+
+  async getReceivedInvitations() {
+    return fetchAPI("/invitation/received");
+  },
+  
+  async getSentInvitations() {
+    return fetchAPI("/invitation/sent");
+  },
+  
+  async acceptInvitation(id: number) {
+    return fetchAPI(`/invitation/${id}/accept`, {
+      method: "PATCH",
+    });
+  },
+  
+  async refuseInvitation(id: number) {
+    return fetchAPI(`/invitation/${id}/refuse`, {
+      method: "PATCH",
+    });
+  },
 
 };
