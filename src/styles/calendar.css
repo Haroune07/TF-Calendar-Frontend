@@ -1,4 +1,4 @@
-﻿/* CONTAINER */
+/* CONTAINER */
 .calendar-container {
   width: 100%;
   background: #ffffff;
@@ -158,3 +158,100 @@
   border-radius: 50%;
   flex-shrink: 0;
 }
+
+/* WEEK VIEW */
+.week-view-container {
+  display: flex;
+  flex-direction: column;
+  height: 600px;
+  overflow-y: auto;
+  border-top: 1px solid #eee;
+}
+
+.week-header {
+  display: grid;
+  grid-template-columns: 60px repeat(7, 1fr);
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
+  border-bottom: 1px solid #eee;
+}
+
+.time-gutter-header {
+  border-right: 1px solid #eee;
+}
+
+.week-day-column-header {
+  padding: 10px 0;
+  text-align: center;
+  border-right: 1px solid #f0f0f0;
+}
+
+.week-day-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.week-day-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-top: 4px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 50%;
+  color: #1e293b;
+}
+
+.week-day-number.today {
+  background-color: #2563eb;
+  color: white;
+}
+
+.week-grid {
+  display: grid;
+  grid-template-columns: 60px repeat(7, 1fr);
+}
+
+.time-gutter {
+  border-right: 1px solid #eee;
+  background: #f8fafc;
+}
+
+.hour-label {
+  height: 60px;
+  font-size: 10px;
+  color: #94a3b8;
+  text-align: center;
+  padding-top: 10px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.week-day-column {
+  position: relative;
+  border-right: 1px solid #f1f5f9;
+  background-color: white;
+}
+
+.time-slot {
+  height: 60px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.week-day-column:last-child {
+  border-right: none;
+}
+
+.week-event-wrapper {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  z-index: 5;
+}
+

@@ -27,7 +27,7 @@ function EventPill({ programmable }: { programmable: ProgrammableDTO }) {
   );
 }
 
-export default function Calendar() {
+export default function Calendar({ view }: { view: "month" | "week" }) {
   const [date, setDate] = useState(new Date());
   const [activites, setActivites] = useState<ActiviteDTO[]>([]);
   const [evenements, setEvenements] = useState<EvenementDTO[]>([]);
@@ -73,6 +73,23 @@ export default function Calendar() {
     );
   };
 
+  const isDateToday = (d: Date) => {
+    return d.toDateString() === today.toDateString();
+  };
+
+  const getWeekDays = () => {
+    const startOfWeek = new Date(date);
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day;
+    startOfWeek.setDate(diff);
+
+    return Array.from({ length: 7 }).map((_, i) => {
+      const d = new Date(startOfWeek);
+      d.setDate(startOfWeek.getDate() + i);
+      return d;
+    });
+  };
+
   useEffect(() => {
     if (!user?.id) return;
     api.getProgrammableByUser(user.id).then(programmable => {
@@ -83,13 +100,9 @@ export default function Calendar() {
   }, [user?.id]);
 
   const getProgrammablesForDay = (day : number): ProgrammableDTO[] => {
-
     const programmables = [...activites, ...evenements];
     return programmables.filter((programmable) => {
-
       const start = new Date(programmable.dateDepart)
-
-      // necessaire pour eviter que des problemes de timezone
       const startDay = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
       const cellDate = new Date(Date.UTC(year, month, day));
 
@@ -98,12 +111,25 @@ export default function Calendar() {
         end.setUTCDate(end.getUTCDate() + programmable.dureeJours - 1);
         return cellDate >= startDay && cellDate <= end;
       }
-
       return cellDate.getTime() == startDay.getTime()
-
     })
-
   }
+
+  const getProgrammablesForDate = (d: Date): ProgrammableDTO[] => {
+    const programmables = [...activites, ...evenements];
+    return programmables.filter((p) => {
+      const start = new Date(p.dateDepart);
+      const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+      const targetDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+      if (p.type === "evenement" && p.dureeJours) {
+        const endDay = new Date(startDay);
+        endDay.setDate(endDay.getDate() + p.dureeJours - 1);
+        return targetDay >= startDay && targetDay <= endDay;
+      }
+      return targetDay.getTime() === startDay.getTime();
+    });
+  };
 
   const days = getDays();
 
@@ -115,32 +141,82 @@ export default function Calendar() {
         <button onClick={nextMonth}>›</button>
       </div>
 
-      <div className="calendar-grid">
-        {weekDays.map((day) => (
-          <div key={day} className="header-day">
-            {day}
-          </div>
-        ))}
-
-        {days.map((day, index) =>
-          day ? (
-            <div
-              key={index}
-              className={`day ${isToday(day) ? "today" : ""}`}
-            >
-              <span className="day-number">{day}</span>
-              <div className="day-programmables">
-                {getProgrammablesForDay(day).map((programmable) =>(
-                  <EventPill key={programmable.id} programmable={programmable} />
-                ))}
-              </div>
+      {view === "month" ? (
+        <div className="calendar-grid">
+          {weekDays.map((day) => (
+            <div key={day} className="header-day">
+              {day}
             </div>
-          ) : (
-            <div key={index}  className="day empty" />
-          )
-        )}
+          ))}
 
-      </div>
+          {days.map((day, index) =>
+            day ? (
+              <div
+                key={index}
+                className={`day ${isToday(day) ? "today" : ""}`}
+              >
+                <span className="day-number">{day}</span>
+                <div className="day-programmables">
+                  {getProgrammablesForDay(day).map((programmable) =>(
+                    <EventPill key={programmable.id} programmable={programmable} />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div key={index}  className="day empty" />
+            )
+          )}
+        </div>
+      ) : (
+        <div className="week-view-container">
+          {/* En-tête des jours de la semaine */}
+          <div className="week-header">
+            <div className="time-gutter-header" />
+            {getWeekDays().map((dayDate, i) => (
+              <div key={i} className="week-day-column-header">
+                <span className="week-day-label">{weekDays[dayDate.getDay()]}</span>
+                <span className={`week-day-number ${isDateToday(dayDate) ? "today" : ""}`}>
+                  {dayDate.getDate()}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Grille horaire */}
+          <div className="week-grid">
+            <div className="time-gutter">
+              {Array.from({ length: 24 }).map((_, i) => (
+                <div key={i} className="hour-label">
+                  {i === 0 ? "12 AM" : i < 12 ? `${i} AM` : i === 12 ? "12 PM" : `${i - 12} PM`}
+                </div>
+              ))}
+            </div>
+            {getWeekDays().map((dayDate, i) => (
+              <div key={i} className="week-day-column">
+                {Array.from({ length: 24 }).map((_, h) => (
+                  <div key={h} className="time-slot" />
+                ))}
+                {getProgrammablesForDate(dayDate).map((p) => {
+                  const start = new Date(p.dateDepart);
+                  const hour = start.getHours();
+                  const minutes = start.getMinutes();
+                  const top = hour * 60 + (minutes / 60) * 60;
+                  
+                  return (
+                    <div 
+                      key={p.id} 
+                      className="week-event-wrapper"
+                      style={{ top: `${top}px` }}
+                    >
+                      <EventPill programmable={p} />
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
 
 
