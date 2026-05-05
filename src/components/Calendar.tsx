@@ -171,7 +171,8 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
     const d1 = new Date(debutE.getFullYear(), debutE.getMonth(), debutE.getDate());
     const d2 = new Date(debutSemaine.getFullYear(), debutSemaine.getMonth(), debutSemaine.getDate());
     
-    let colDepart = Math.floor((d1.getTime() - d2.getTime()) / (24 * 3600 * 1000)) + 1;
+    // Utilisation de Math.round pour éviter les décalages de quelques ms
+    let colDepart = Math.round((d1.getTime() - d2.getTime()) / (24 * 3600 * 1000)) + 1;
     let span = e.dureeJours || 1;
 
     if (colDepart < 1) {
