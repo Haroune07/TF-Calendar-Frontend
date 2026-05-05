@@ -120,37 +120,28 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
     });
   }, [user?.id]);
 
-  const getProgrammablesForDay = (day : number): ProgrammableDTO[] => {
-    const programmables = [...activites, ...evenements];
-    return programmables.filter((programmable) => {
-      const start = new Date(programmable.dateDepart)
-      const startDay = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
-      const cellDate = new Date(Date.UTC(year, month, day));
-
-      if (programmable.type == "evenement" && programmable.dureeJours){
-        const end = new Date(startDay);
-        end.setUTCDate(end.getUTCDate() + programmable.dureeJours - 1);
-        return cellDate >= startDay && cellDate <= end;
-      }
-      return cellDate.getTime() == startDay.getTime()
-    })
-  }
-
-  const getProgrammablesForDate = (d: Date): ProgrammableDTO[] => {
-    const programmables = [...activites, ...evenements];
-    return programmables.filter((p) => {
-      const start = new Date(p.dateDepart);
-      const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-      const targetDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  /**
+   * Récupère les programmables pour une date précise
+   * On compare juste l'année, le mois et le jour pour pas avoir de trouble avec les heures
+   */
+  function getProgrammablesParDate(d: Date): ProgrammableDTO[] {
+    const tous = [...activites, ...evenements];
+    return tous.filter((p) => {
+      const debut = new Date(p.dateDepart);
+      
+      // On crée des dates "pures" (minuit) pour comparer
+      const jourDebut = new Date(debut.getFullYear(), debut.getMonth(), debut.getDate());
+      const jourCible = new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
       if (p.type === "evenement" && p.dureeJours) {
-        const endDay = new Date(startDay);
-        endDay.setDate(endDay.getDate() + p.dureeJours - 1);
-        return targetDay >= startDay && targetDay <= endDay;
+        const jourFin = new Date(jourDebut);
+        jourFin.setDate(jourFin.getDate() + p.dureeJours - 1);
+        return jourCible >= jourDebut && jourCible <= jourFin;
       }
-      return targetDay.getTime() === startDay.getTime();
+      
+      return jourCible.getTime() === jourDebut.getTime();
     });
-  };
+  }
 
   const days = getDays();
 
@@ -178,7 +169,7 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
               >
                 <span className="day-number">{day}</span>
                 <div className="day-programmables">
-                  {getProgrammablesForDay(day).map((programmable) =>(
+                  {getProgrammablesParDate(new Date(year, month, day)).map((programmable) =>(
                     <EventPill key={programmable.id} programmable={programmable} estVueSemaine={false} />
                   ))}
                 </div>
@@ -217,7 +208,7 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
                 {Array.from({ length: 24 }).map((_, h) => (
                   <div key={h} className="time-slot" />
                 ))}
-                {getProgrammablesForDate(dayDate).map((p) => {
+                {getProgrammablesParDate(dayDate).map((p) => {
                   const start = new Date(p.dateDepart);
                   const hour = start.getHours();
                   const minutes = start.getMinutes();
