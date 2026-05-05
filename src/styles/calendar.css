@@ -278,4 +278,27 @@
   right: 2px;
   z-index: 5;
 }
+
+/* ALL DAY ROW */
+.week-all-day-row {
+  display: grid;
+  grid-template-columns: 60px repeat(7, 1fr);
+  border-bottom: 1px solid #eee;
+  background-color: #fafafa;
+  min-height: 40px;
+}
+
+.all-day-events-grid {
+  grid-column: 2 / span 7;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: min-content;
+  gap: 4px;
+  padding: 4px 0;
+  border-right: 1px solid #f0f0f0;
+}
+
+.all-day-event-wrapper {
+  padding: 0 2px;
+}
 

@@ -143,6 +143,51 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
     });
   }
 
+  /**
+   * Trouve les événements qui doivent s'afficher dans la barre du haut
+   */
+  function getEvenementsSemaine() {
+    const debutSemaine = joursSemaine[0];
+    const finSemaine = joursSemaine[6];
+
+    return evenements.filter(e => {
+      const debut = new Date(e.dateDepart);
+      const fin = new Date(debut);
+      fin.setDate(fin.getDate() + (e.dureeJours || 1) - 1);
+
+      // Ça chevauche la semaine si :
+      // debut <= finSemaine ET fin >= debutSemaine
+      return debut <= finSemaine && fin >= debutSemaine;
+    });
+  }
+
+  /**
+   * Calcule où l'événement doit se placer dans la grille (colonne et étalement)
+   */
+  function calculerPositionEvenement(e: EvenementDTO) {
+    const debutE = new Date(e.dateDepart);
+    const debutSemaine = joursSemaine[0];
+    
+    // On normalise les dates à minuit pour un calcul de jours exact
+    const d1 = new Date(debutE.getFullYear(), debutE.getMonth(), debutE.getDate());
+    const d2 = new Date(debutSemaine.getFullYear(), debutSemaine.getMonth(), debutSemaine.getDate());
+    
+    let colDepart = Math.floor((d1.getTime() - d2.getTime()) / (24 * 3600 * 1000)) + 1;
+    let span = e.dureeJours;
+
+    // Si ça commence avant dimanche, on tronque le début
+    if (colDepart < 1) {
+      span += (colDepart - 1);
+      colDepart = 1;
+    }
+    // Si ça finit après samedi, on tronque la fin
+    if (colDepart + span > 8) {
+      span = 8 - colDepart;
+    }
+
+    return { colDepart, span };
+  }
+
   const days = getDays();
 
   return (
@@ -184,7 +229,7 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
           {/* En-tête des jours de la semaine */}
           <div className="week-header">
             <div className="time-gutter-header" />
-            {getWeekDays().map((dayDate, i) => (
+            {joursSemaine.map((dayDate, i) => (
               <div key={i} className="week-day-column-header">
                 <span className="week-day-label">{weekDays[dayDate.getDay()]}</span>
                 <span className={`week-day-number ${isDateToday(dayDate) ? "today" : ""}`}>
@@ -192,6 +237,28 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
                 </span>
               </div>
             ))}
+          </div>
+
+          {/* Barre des événements multi-jours */}
+          <div className="week-all-day-row">
+            <div className="time-gutter-header" />
+            <div className="all-day-events-grid">
+              {getEvenementsSemaine().map(e => {
+                const { colDepart, span } = calculerPositionEvenement(e);
+
+                if (span <= 0) return null;
+
+                return (
+                  <div 
+                    key={e.id}
+                    className="all-day-event-wrapper"
+                    style={{ gridColumn: `${colDepart} / span ${span}` }}
+                  >
+                    <EventPill programmable={e} estVueSemaine={true} />
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Grille horaire */}
@@ -208,7 +275,7 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
                 {Array.from({ length: 24 }).map((_, h) => (
                   <div key={h} className="time-slot" />
                 ))}
-                {getProgrammablesParDate(dayDate).map((p) => {
+                {getProgrammablesParDate(dayDate).filter(p => p.type === "activite").map((p) => {
                   const start = new Date(p.dateDepart);
                   const hour = start.getHours();
                   const minutes = start.getMinutes();
