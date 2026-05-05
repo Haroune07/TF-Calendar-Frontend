@@ -14,7 +14,7 @@ function EventPill({ programmable, estVueSemaine }: { programmable: Programmable
   const color =
     programmable.type === "activite"
       ? PRIORITYTOCOLOR[programmable.priorite ?? "IMPORTANCE_MOYENNE"]
-      : "#8b5cf6";
+      : `hsl(${(programmable.nom.length * 40) % 360}, 60%, 50%)`; // Couleur unique basée sur le nom
  
   return (
     <div
@@ -147,17 +147,18 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
    * Trouve les événements qui doivent s'afficher dans la barre du haut
    */
   function getEvenementsSemaine() {
-    const debutSemaine = joursSemaine[0];
-    const finSemaine = joursSemaine[6];
+    const debutSemaine = new Date(joursSemaine[0].getFullYear(), joursSemaine[0].getMonth(), joursSemaine[0].getDate());
+    const finSemaine = new Date(joursSemaine[6].getFullYear(), joursSemaine[6].getMonth(), joursSemaine[6].getDate(), 23, 59, 59);
 
     return evenements.filter(e => {
       const debut = new Date(e.dateDepart);
       const fin = new Date(debut);
       fin.setDate(fin.getDate() + (e.dureeJours || 1) - 1);
+      
+      const d = new Date(debut.getFullYear(), debut.getMonth(), debut.getDate());
+      const f = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate(), 23, 59, 59);
 
-      // Ça chevauche la semaine si :
-      // debut <= finSemaine ET fin >= debutSemaine
-      return debut <= finSemaine && fin >= debutSemaine;
+      return d <= finSemaine && f >= debutSemaine;
     });
   }
 

@@ -294,8 +294,9 @@
   grid-column: 2 / span 7;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: auto; /* Les rangées s'adaptent au contenu */
-  gap: 4px;
+  grid-auto-rows: auto;
+  grid-auto-flow: row dense; /* Optimise le remplissage des trous */
+  gap: 2px;
   padding: 4px 0;
   border-right: 1px solid #f0f0f0;
 }
