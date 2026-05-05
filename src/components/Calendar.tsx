@@ -10,7 +10,7 @@ const PRIORITYTOCOLOR: Record<string, string> = {
   IMPORTANCE_BASSE: "#10b981",
 };
 
-function EventPill({ programmable }: { programmable: ProgrammableDTO }) {
+function EventPill({ programmable, estVueSemaine }: { programmable: ProgrammableDTO, estVueSemaine?: boolean }) {
   const color =
     programmable.type === "activite"
       ? PRIORITYTOCOLOR[programmable.priorite ?? "IMPORTANCE_MOYENNE"]
@@ -18,11 +18,14 @@ function EventPill({ programmable }: { programmable: ProgrammableDTO }) {
  
   return (
     <div
-      className="event-pill"
-      style={{ backgroundColor: color }}
+      className={`event-pill ${estVueSemaine ? "vue-semaine" : ""}`}
+      style={{ backgroundColor: color, height: estVueSemaine ? "100%" : "auto" }}
       title={`${programmable.nom}${programmable.description ? ` — ${programmable.description}` : ""}`}
     >
-      {programmable.nom}
+      <span className="event-name">{programmable.nom}</span>
+      {estVueSemaine && programmable.description && (
+        <p className="event-desc-court">{programmable.description}</p>
+      )}
     </div>
   );
 }
@@ -40,14 +43,45 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
 
   const weekDays = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
 
-  const monthLabel = date.toLocaleDateString("fr-CA", {
-    month: "long",
-    year: "numeric",
-  });
+  function getWeekDays() {
+    const startOfWeek = new Date(date);
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day;
+    startOfWeek.setDate(diff);
 
+    return Array.from({ length: 7 }).map((_, i) => {
+      const d = new Date(startOfWeek);
+      d.setDate(startOfWeek.getDate() + i);
+      return d;
+    });
+  }
 
-  const prevMonth = () => setDate(new Date(year, month - 1, 1));
-  const nextMonth = () => setDate(new Date(year, month + 1, 1));
+  const joursSemaine = getWeekDays();
+  const titreHeader = view === "month"
+    ? date.toLocaleDateString("fr-CA", { month: "long", year: "numeric" })
+    : `${joursSemaine[0].toLocaleDateString("fr-CA", { day: "numeric", month: "short" })} - ${joursSemaine[6].toLocaleDateString("fr-CA", { day: "numeric", month: "short", year: "numeric" })}`;
+
+  const allerPrecedent = () => {
+    if (view === "month") {
+      setDate(new Date(year, month - 1, 1));
+    } else {
+      // On recule de 7 jours pour la semaine
+      const d = new Date(date);
+      d.setDate(d.getDate() - 7);
+      setDate(d);
+    }
+  };
+
+  const allerSuivant = () => {
+    if (view === "month") {
+      setDate(new Date(year, month + 1, 1));
+    } else {
+      // On avance de 7 jours pour la semaine
+      const d = new Date(date);
+      d.setDate(d.getDate() + 7);
+      setDate(d);
+    }
+  };
 
   const getDays = () => {
     const firstDay = new Date(year, month, 1).getDay();
@@ -77,19 +111,6 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
     return d.toDateString() === today.toDateString();
   };
 
-  const getWeekDays = () => {
-    const startOfWeek = new Date(date);
-    const day = startOfWeek.getDay();
-    const diff = startOfWeek.getDate() - day;
-    startOfWeek.setDate(diff);
-
-    return Array.from({ length: 7 }).map((_, i) => {
-      const d = new Date(startOfWeek);
-      d.setDate(startOfWeek.getDate() + i);
-      return d;
-    });
-  };
-
   useEffect(() => {
     if (!user?.id) return;
     api.getProgrammableByUser(user.id).then(programmable => {
@@ -99,46 +120,37 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
     });
   }, [user?.id]);
 
-  const getProgrammablesForDay = (day : number): ProgrammableDTO[] => {
-    const programmables = [...activites, ...evenements];
-    return programmables.filter((programmable) => {
-      const start = new Date(programmable.dateDepart)
-      const startDay = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
-      const cellDate = new Date(Date.UTC(year, month, day));
-
-      if (programmable.type == "evenement" && programmable.dureeJours){
-        const end = new Date(startDay);
-        end.setUTCDate(end.getUTCDate() + programmable.dureeJours - 1);
-        return cellDate >= startDay && cellDate <= end;
-      }
-      return cellDate.getTime() == startDay.getTime()
-    })
-  }
-
-  const getProgrammablesForDate = (d: Date): ProgrammableDTO[] => {
-    const programmables = [...activites, ...evenements];
-    return programmables.filter((p) => {
-      const start = new Date(p.dateDepart);
-      const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-      const targetDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  /**
+   * Récupère les programmables pour une date précise
+   * On compare juste l'année, le mois et le jour pour pas avoir de trouble avec les heures
+   */
+  function getProgrammablesParDate(d: Date): ProgrammableDTO[] {
+    const tous = [...activites, ...evenements];
+    return tous.filter((p) => {
+      const debut = new Date(p.dateDepart);
+      
+      // On crée des dates "pures" (minuit) pour comparer
+      const jourDebut = new Date(debut.getFullYear(), debut.getMonth(), debut.getDate());
+      const jourCible = new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
       if (p.type === "evenement" && p.dureeJours) {
-        const endDay = new Date(startDay);
-        endDay.setDate(endDay.getDate() + p.dureeJours - 1);
-        return targetDay >= startDay && targetDay <= endDay;
+        const jourFin = new Date(jourDebut);
+        jourFin.setDate(jourFin.getDate() + p.dureeJours - 1);
+        return jourCible >= jourDebut && jourCible <= jourFin;
       }
-      return targetDay.getTime() === startDay.getTime();
+      
+      return jourCible.getTime() === jourDebut.getTime();
     });
-  };
+  }
 
   const days = getDays();
 
   return (
     <div className="calendar-container">
       <div className="calendar-header">
-        <button onClick={prevMonth}>‹</button>
-        <h2>{monthLabel}</h2>
-        <button onClick={nextMonth}>›</button>
+        <button onClick={allerPrecedent}>‹</button>
+        <h2>{titreHeader}</h2>
+        <button onClick={allerSuivant}>›</button>
       </div>
 
       {view === "month" ? (
@@ -157,8 +169,8 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
               >
                 <span className="day-number">{day}</span>
                 <div className="day-programmables">
-                  {getProgrammablesForDay(day).map((programmable) =>(
-                    <EventPill key={programmable.id} programmable={programmable} />
+                  {getProgrammablesParDate(new Date(year, month, day)).map((programmable) =>(
+                    <EventPill key={programmable.id} programmable={programmable} estVueSemaine={false} />
                   ))}
                 </div>
               </div>
@@ -196,19 +208,23 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
                 {Array.from({ length: 24 }).map((_, h) => (
                   <div key={h} className="time-slot" />
                 ))}
-                {getProgrammablesForDate(dayDate).map((p) => {
+                {getProgrammablesParDate(dayDate).map((p) => {
                   const start = new Date(p.dateDepart);
                   const hour = start.getHours();
                   const minutes = start.getMinutes();
+                  // 60px par heure, donc on calcule le top
                   const top = hour * 60 + (minutes / 60) * 60;
                   
+                  // On calcule la hauteur : activités utilisent dureeHeures, événements on met 30px par défaut
+                  const hauteur = p.type === "activite" ? p.dureeHeures * 60 : 30;
+
                   return (
                     <div 
                       key={p.id} 
                       className="week-event-wrapper"
-                      style={{ top: `${top}px` }}
+                      style={{ top: `${top}px`, height: `${hauteur}px` }}
                     >
-                      <EventPill programmable={p} />
+                      <EventPill programmable={p} estVueSemaine={true} />
                     </div>
                   );
                 })}
