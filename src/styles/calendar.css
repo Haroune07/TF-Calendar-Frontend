@@ -135,6 +135,30 @@
   opacity: 0.85;
 }
 
+.event-pill.vue-semaine {
+  white-space: normal;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.event-name {
+  font-weight: 700;
+}
+
+.event-desc-court {
+  margin: 0;
+  font-size: 9px;
+  opacity: 0.9;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* LEGEND */
 .calendar-legend {
   display: flex;

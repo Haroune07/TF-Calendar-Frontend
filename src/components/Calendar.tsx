@@ -10,7 +10,7 @@ const PRIORITYTOCOLOR: Record<string, string> = {
   IMPORTANCE_BASSE: "#10b981",
 };
 
-function EventPill({ programmable }: { programmable: ProgrammableDTO }) {
+function EventPill({ programmable, estVueSemaine }: { programmable: ProgrammableDTO, estVueSemaine?: boolean }) {
   const color =
     programmable.type === "activite"
       ? PRIORITYTOCOLOR[programmable.priorite ?? "IMPORTANCE_MOYENNE"]
@@ -18,11 +18,14 @@ function EventPill({ programmable }: { programmable: ProgrammableDTO }) {
  
   return (
     <div
-      className="event-pill"
-      style={{ backgroundColor: color }}
+      className={`event-pill ${estVueSemaine ? "vue-semaine" : ""}`}
+      style={{ backgroundColor: color, height: estVueSemaine ? "100%" : "auto" }}
       title={`${programmable.nom}${programmable.description ? ` — ${programmable.description}` : ""}`}
     >
-      {programmable.nom}
+      <span className="event-name">{programmable.nom}</span>
+      {estVueSemaine && programmable.description && (
+        <p className="event-desc-court">{programmable.description}</p>
+      )}
     </div>
   );
 }
@@ -176,7 +179,7 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
                 <span className="day-number">{day}</span>
                 <div className="day-programmables">
                   {getProgrammablesForDay(day).map((programmable) =>(
-                    <EventPill key={programmable.id} programmable={programmable} />
+                    <EventPill key={programmable.id} programmable={programmable} estVueSemaine={false} />
                   ))}
                 </div>
               </div>
@@ -218,15 +221,19 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
                   const start = new Date(p.dateDepart);
                   const hour = start.getHours();
                   const minutes = start.getMinutes();
+                  // 60px par heure, donc on calcule le top
                   const top = hour * 60 + (minutes / 60) * 60;
                   
+                  // On calcule la hauteur : activités utilisent dureeHeures, événements on met 30px par défaut
+                  const hauteur = p.type === "activite" ? p.dureeHeures * 60 : 30;
+
                   return (
                     <div 
                       key={p.id} 
                       className="week-event-wrapper"
-                      style={{ top: `${top}px` }}
+                      style={{ top: `${top}px`, height: `${hauteur}px` }}
                     >
-                      <EventPill programmable={p} />
+                      <EventPill programmable={p} estVueSemaine={true} />
                     </div>
                   );
                 })}
