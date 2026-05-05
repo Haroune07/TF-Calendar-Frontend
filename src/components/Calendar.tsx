@@ -40,14 +40,45 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
 
   const weekDays = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
 
-  const monthLabel = date.toLocaleDateString("fr-CA", {
-    month: "long",
-    year: "numeric",
-  });
+  function getWeekDays() {
+    const startOfWeek = new Date(date);
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day;
+    startOfWeek.setDate(diff);
 
+    return Array.from({ length: 7 }).map((_, i) => {
+      const d = new Date(startOfWeek);
+      d.setDate(startOfWeek.getDate() + i);
+      return d;
+    });
+  }
 
-  const prevMonth = () => setDate(new Date(year, month - 1, 1));
-  const nextMonth = () => setDate(new Date(year, month + 1, 1));
+  const joursSemaine = getWeekDays();
+  const titreHeader = view === "month"
+    ? date.toLocaleDateString("fr-CA", { month: "long", year: "numeric" })
+    : `${joursSemaine[0].toLocaleDateString("fr-CA", { day: "numeric", month: "short" })} - ${joursSemaine[6].toLocaleDateString("fr-CA", { day: "numeric", month: "short", year: "numeric" })}`;
+
+  const allerPrecedent = () => {
+    if (view === "month") {
+      setDate(new Date(year, month - 1, 1));
+    } else {
+      // On recule de 7 jours pour la semaine
+      const d = new Date(date);
+      d.setDate(d.getDate() - 7);
+      setDate(d);
+    }
+  };
+
+  const allerSuivant = () => {
+    if (view === "month") {
+      setDate(new Date(year, month + 1, 1));
+    } else {
+      // On avance de 7 jours pour la semaine
+      const d = new Date(date);
+      d.setDate(d.getDate() + 7);
+      setDate(d);
+    }
+  };
 
   const getDays = () => {
     const firstDay = new Date(year, month, 1).getDay();
@@ -75,19 +106,6 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
 
   const isDateToday = (d: Date) => {
     return d.toDateString() === today.toDateString();
-  };
-
-  const getWeekDays = () => {
-    const startOfWeek = new Date(date);
-    const day = startOfWeek.getDay();
-    const diff = startOfWeek.getDate() - day;
-    startOfWeek.setDate(diff);
-
-    return Array.from({ length: 7 }).map((_, i) => {
-      const d = new Date(startOfWeek);
-      d.setDate(startOfWeek.getDate() + i);
-      return d;
-    });
   };
 
   useEffect(() => {
@@ -136,9 +154,9 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
   return (
     <div className="calendar-container">
       <div className="calendar-header">
-        <button onClick={prevMonth}>‹</button>
-        <h2>{monthLabel}</h2>
-        <button onClick={nextMonth}>›</button>
+        <button onClick={allerPrecedent}>‹</button>
+        <h2>{titreHeader}</h2>
+        <button onClick={allerSuivant}>›</button>
       </div>
 
       {view === "month" ? (
