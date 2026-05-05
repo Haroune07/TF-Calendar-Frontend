@@ -114,7 +114,6 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
   useEffect(() => {
     if (!user?.id) return;
     api.getProgrammableByUser(user.id).then(programmable => {
-      console.log("raw data:", programmable);
       setActivites(programmable.filter(p => p.type == "activite"))
       setEvenements(programmable.filter(p => p.type == "evenement"))
     });
@@ -169,19 +168,16 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
     const debutE = new Date(e.dateDepart);
     const debutSemaine = joursSemaine[0];
     
-    // On normalise les dates à minuit pour un calcul de jours exact
     const d1 = new Date(debutE.getFullYear(), debutE.getMonth(), debutE.getDate());
     const d2 = new Date(debutSemaine.getFullYear(), debutSemaine.getMonth(), debutSemaine.getDate());
     
     let colDepart = Math.floor((d1.getTime() - d2.getTime()) / (24 * 3600 * 1000)) + 1;
-    let span = e.dureeJours;
+    let span = e.dureeJours || 1;
 
-    // Si ça commence avant dimanche, on tronque le début
     if (colDepart < 1) {
       span += (colDepart - 1);
       colDepart = 1;
     }
-    // Si ça finit après samedi, on tronque la fin
     if (colDepart + span > 8) {
       span = 8 - colDepart;
     }
