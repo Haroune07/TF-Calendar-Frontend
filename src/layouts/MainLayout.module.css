@@ -1,6 +1,6 @@
 .container {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
   width: 100vw;
   background-color: var(--color-bg-main);
   overflow: hidden;
@@ -72,4 +72,7 @@
   width: 85.72%; /* 6/7 */
   padding: 2rem;
   overflow-y: auto;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
