@@ -5,7 +5,7 @@ export type UserDTO = {
   email: string;
   nomComplet: string;
   omnivoxDA?: number | null;
-  calendrierId?: number;
+  calendrierId?: number | null;
 };
 
 // export type ProgrammableDTO = {
