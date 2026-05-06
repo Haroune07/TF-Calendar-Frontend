@@ -29,7 +29,7 @@ export default function HomePage() {
       </header>
 
       <div className={styles.calendarWrapper}>
-        <Calendar /> 
+        <Calendar view={view} /> 
       </div>
     </div>
   );

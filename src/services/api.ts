@@ -5,7 +5,7 @@ export type UserDTO = {
   email: string;
   nomComplet: string;
   omnivoxDA?: number | null;
-  calendrierId?: number;
+  calendrierId?: number | null;
 };
 
 // export type ProgrammableDTO = {
@@ -153,4 +153,38 @@ export const api = {
     });
   },
 
+};
+
+
+export type CreateActivitePayload = {
+  nom: string;
+  description?: string;
+  dateDepart: string;
+  dureeHeures: number;
+  priorite: "URGENT" | "IMPORTANCE_MOYENNE" | "IMPORTANCE_BASSE";
+};
+ 
+export type CreateEvenementPayload = {
+  nom: string;
+  description?: string;
+  dateDepart: string;
+  dureeJours: number;
+};
+
+export const programmableApi = {
+  async createActivite(data: CreateActivitePayload): Promise<ActiviteDTO> {
+    return fetchAPI("/programmable/activite", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  },
+ 
+  async createEvenement(data: CreateEvenementPayload): Promise<EvenementDTO> {
+    return fetchAPI("/programmable/evenement", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  },
 };

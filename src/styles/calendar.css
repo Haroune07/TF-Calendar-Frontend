@@ -1,4 +1,4 @@
-﻿/* CONTAINER */
+/* CONTAINER */
 .calendar-container {
   width: 100%;
   background: #ffffff;
@@ -135,6 +135,32 @@
   opacity: 0.85;
 }
 
+.event-pill.vue-semaine {
+  white-space: normal;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  min-height: 24px; /* Force une visibilité minimale */
+}
+
+.event-name {
+  font-weight: 700;
+}
+
+.event-desc-court {
+  margin: 0;
+  font-size: 9px;
+  opacity: 0.9;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* LEGEND */
 .calendar-legend {
   display: flex;
@@ -158,3 +184,128 @@
   border-radius: 50%;
   flex-shrink: 0;
 }
+
+/* WEEK VIEW */
+.week-view-container {
+  display: flex;
+  flex-direction: column;
+  height: 600px;
+  overflow-y: auto;
+  border-top: 1px solid #eee;
+}
+
+.week-header {
+  display: grid;
+  grid-template-columns: 60px repeat(7, 1fr);
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
+  border-bottom: 1px solid #eee;
+}
+
+.time-gutter-header {
+  border-right: 1px solid #eee;
+}
+
+.week-day-column-header {
+  padding: 10px 0;
+  text-align: center;
+  border-right: 1px solid #f0f0f0;
+}
+
+.week-day-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.week-day-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-top: 4px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 50%;
+  color: #1e293b;
+}
+
+.week-day-number.today {
+  background-color: #2563eb;
+  color: white;
+}
+
+.week-grid {
+  display: grid;
+  grid-template-columns: 60px repeat(7, 1fr);
+}
+
+.time-gutter {
+  border-right: 1px solid #eee;
+  background: #f8fafc;
+}
+
+.hour-label {
+  height: 60px;
+  font-size: 10px;
+  color: #94a3b8;
+  text-align: center;
+  padding-top: 10px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.week-day-column {
+  position: relative;
+  border-right: 1px solid #f1f5f9;
+  background-color: white;
+}
+
+.time-slot {
+  height: 60px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.week-day-column:last-child {
+  border-right: none;
+}
+
+.week-event-wrapper {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  z-index: 5;
+}
+
+/* ALL DAY ROW */
+.week-all-day-row {
+  display: grid;
+  grid-template-columns: 60px repeat(7, 1fr);
+  border-bottom: 1px solid #eee;
+  background-color: #fafafa;
+  min-height: 40px;
+  height: auto; /* Permet à la ligne de grandir */
+}
+
+.all-day-events-grid {
+  grid-column: 2 / span 7;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: min-content;
+  gap: 2px;
+  padding: 4px 0;
+  border-right: 1px solid #f0f0f0;
+  min-height: 30px; /* Assure qu'on voit au moins une ligne */
+}
+
+.all-day-event-wrapper {
+  padding: 0 2px;
+  min-height: 28px;
+  display: flex;
+  z-index: 10; /* Assure que c'est au-dessus */
+}
+

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import "../styles/calendar.css";
 import { api, type ActiviteDTO, type EvenementDTO, type ProgrammableDTO, type UserDTO } from "../services/api";
 import { useRouteLoaderData } from "react-router-dom";
+import CreateProgrammable from "./CreateProgrammable";
 
 
 const PRIORITYTOCOLOR: Record<string, string> = {
@@ -10,27 +11,32 @@ const PRIORITYTOCOLOR: Record<string, string> = {
   IMPORTANCE_BASSE: "#10b981",
 };
 
-function EventPill({ programmable }: { programmable: ProgrammableDTO }) {
+function EventPill({ programmable, estVueSemaine }: { programmable: ProgrammableDTO, estVueSemaine?: boolean }) {
   const color =
     programmable.type === "activite"
       ? PRIORITYTOCOLOR[programmable.priorite ?? "IMPORTANCE_MOYENNE"]
-      : "#8b5cf6";
+      : `hsl(${(programmable.nom.length * 40) % 360}, 60%, 50%)`; // Couleur unique basée sur le nom
  
   return (
     <div
-      className="event-pill"
-      style={{ backgroundColor: color }}
+      className={`event-pill ${estVueSemaine ? "vue-semaine" : ""}`}
+      style={{ backgroundColor: color, height: estVueSemaine ? "100%" : "auto" }}
       title={`${programmable.nom}${programmable.description ? ` — ${programmable.description}` : ""}`}
     >
-      {programmable.nom}
+      <span className="event-name">{programmable.nom}</span>
+      {estVueSemaine && programmable.description && (
+        <p className="event-desc-court">{programmable.description}</p>
+      )}
     </div>
   );
 }
 
-export default function Calendar() {
+export default function Calendar({ view }: { view: "month" | "week" }) {
   const [date, setDate] = useState(new Date());
   const [activites, setActivites] = useState<ActiviteDTO[]>([]);
   const [evenements, setEvenements] = useState<EvenementDTO[]>([]);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   const user = useRouteLoaderData("root") as UserDTO;
 
 
@@ -40,14 +46,45 @@ export default function Calendar() {
 
   const weekDays = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
 
-  const monthLabel = date.toLocaleDateString("fr-CA", {
-    month: "long",
-    year: "numeric",
-  });
+  function getWeekDays() {
+    const startOfWeek = new Date(date);
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day;
+    startOfWeek.setDate(diff);
 
+    return Array.from({ length: 7 }).map((_, i) => {
+      const d = new Date(startOfWeek);
+      d.setDate(startOfWeek.getDate() + i);
+      return d;
+    });
+  }
 
-  const prevMonth = () => setDate(new Date(year, month - 1, 1));
-  const nextMonth = () => setDate(new Date(year, month + 1, 1));
+  const joursSemaine = getWeekDays();
+  const titreHeader = view === "month"
+    ? date.toLocaleDateString("fr-CA", { month: "long", year: "numeric" })
+    : `${joursSemaine[0].toLocaleDateString("fr-CA", { day: "numeric", month: "short" })} - ${joursSemaine[6].toLocaleDateString("fr-CA", { day: "numeric", month: "short", year: "numeric" })}`;
+
+  const allerPrecedent = () => {
+    if (view === "month") {
+      setDate(new Date(year, month - 1, 1));
+    } else {
+      // On recule de 7 jours pour la semaine
+      const d = new Date(date);
+      d.setDate(d.getDate() - 7);
+      setDate(d);
+    }
+  };
+
+  const allerSuivant = () => {
+    if (view === "month") {
+      setDate(new Date(year, month + 1, 1));
+    } else {
+      // On avance de 7 jours pour la semaine
+      const d = new Date(date);
+      d.setDate(d.getDate() + 7);
+      setDate(d);
+    }
+  };
 
   const getDays = () => {
     const firstDay = new Date(year, month, 1).getDay();
@@ -73,95 +110,261 @@ export default function Calendar() {
     );
   };
 
+  const isDateToday = (d: Date) => {
+    return d.toDateString() === today.toDateString();
+  };
+
   useEffect(() => {
     if (!user?.id) return;
     api.getProgrammableByUser(user.id).then(programmable => {
-      console.log("raw data:", programmable);
       setActivites(programmable.filter(p => p.type == "activite"))
       setEvenements(programmable.filter(p => p.type == "evenement"))
     });
   }, [user?.id]);
 
-  const getProgrammablesForDay = (day : number): ProgrammableDTO[] => {
 
-    const programmables = [...activites, ...evenements];
-    return programmables.filter((programmable) => {
 
-      const start = new Date(programmable.dateDepart)
 
-      // necessaire pour eviter que des problemes de timezone
-      const startDay = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
-      const cellDate = new Date(Date.UTC(year, month, day));
+  const handleCreated = (item: ProgrammableDTO) => {
+    if (item.type === "activite"){
+      setActivites(prev => [...prev, item as ActiviteDTO])
+    }
+    else {
+      setEvenements(prev => [...prev, item as EvenementDTO])
+    }
+  }
 
-      if (programmable.type == "evenement" && programmable.dureeJours){
-        const end = new Date(startDay);
-        end.setUTCDate(end.getUTCDate() + programmable.dureeJours - 1);
-        return cellDate >= startDay && cellDate <= end;
+  const handleDayClicked = (day : number) => {
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const dateString = `${year}-${pad(month + 1)}-${pad(day)}T08:00`;
+    setSelectedDate(dateString)
+    setShowModal(true)
+  }
+
+
+  /**
+   * Récupère les programmables pour une date précise
+   * On compare juste l'année, le mois et le jour pour pas avoir de trouble avec les heures
+   */
+  function getProgrammablesParDate(d: Date): ProgrammableDTO[] {
+    const tous = [...activites, ...evenements];
+    return tous.filter((p) => {
+      const debut = new Date(p.dateDepart);
+      
+      // On crée des dates "pures" (minuit) pour comparer
+      const jourDebut = new Date(debut.getFullYear(), debut.getMonth(), debut.getDate());
+      const jourCible = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+      if (p.type === "evenement" && p.dureeJours) {
+        const jourFin = new Date(jourDebut);
+        jourFin.setDate(jourFin.getDate() + p.dureeJours - 1);
+        return jourCible >= jourDebut && jourCible <= jourFin;
       }
+      
+      return jourCible.getTime() === jourDebut.getTime();
+    });
+  }
 
-      return cellDate.getTime() == startDay.getTime()
+  /**
+   * Trouve les événements qui doivent s'afficher dans la barre du haut
+   */
+  function getEvenementsSemaine() {
+    const debutSemaine = new Date(joursSemaine[0].getFullYear(), joursSemaine[0].getMonth(), joursSemaine[0].getDate());
+    const finSemaine = new Date(joursSemaine[6].getFullYear(), joursSemaine[6].getMonth(), joursSemaine[6].getDate(), 23, 59, 59);
 
-    })
+    return evenements.filter(e => {
+      const debut = new Date(e.dateDepart);
+      const fin = new Date(debut);
+      fin.setDate(fin.getDate() + (e.dureeJours || 1) - 1);
+      
+      const d = new Date(debut.getFullYear(), debut.getMonth(), debut.getDate());
+      const f = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate(), 23, 59, 59);
 
+      return d <= finSemaine && f >= debutSemaine;
+    });
+  }
+
+  /**
+   * Calcule où l'événement doit se placer dans la grille (colonne et étalement)
+   */
+  function calculerPositionEvenement(e: EvenementDTO) {
+    const debutE = new Date(e.dateDepart);
+    const debutSemaine = joursSemaine[0];
+    
+    const d1 = new Date(debutE.getFullYear(), debutE.getMonth(), debutE.getDate());
+    const d2 = new Date(debutSemaine.getFullYear(), debutSemaine.getMonth(), debutSemaine.getDate());
+    
+    // Utilisation de Math.round pour éviter les décalages de quelques ms
+    let colDepart = Math.round((d1.getTime() - d2.getTime()) / (24 * 3600 * 1000)) + 1;
+    let span = e.dureeJours || 1;
+
+    if (colDepart < 1) {
+      span += (colDepart - 1);
+      colDepart = 1;
+    }
+    if (colDepart + span > 8) {
+      span = 8 - colDepart;
+    }
+
+    return { colDepart, span };
   }
 
   const days = getDays();
 
   return (
-    <div className="calendar-container">
-      <div className="calendar-header">
-        <button onClick={prevMonth}>‹</button>
-        <h2>{monthLabel}</h2>
-        <button onClick={nextMonth}>›</button>
-      </div>
 
-      <div className="calendar-grid">
-        {weekDays.map((day) => (
-          <div key={day} className="header-day">
-            {day}
+    <>
+    
+      <div className="calendar-container">
+        <div className="calendar-header">
+          <button onClick={allerPrecedent}>‹</button>
+          <h2>{titreHeader}</h2>
+          <button onClick={allerSuivant}>›</button>
+
+          <button
+            className="add-btn"
+            onClick={() => { setSelectedDate(undefined); setShowModal(true); }}
+            title="Créer un élément"
+          >
+            +
+          </button>
+
+        </div>
+
+        {view === "month" ? (
+          <div className="calendar-grid">
+            {weekDays.map((day) => (
+              <div key={day} className="header-day">
+                {day}
+              </div>
+            ))}
+
+            {days.map((day, index) =>
+              day ? (
+                <div
+                  key={index}
+                  className={`day ${isToday(day) ? "today" : ""}`}
+                  onClick={() => handleDayClicked(day)}
+                >
+                  <span className="day-number">{day}</span>
+                  <div className="day-programmables">
+                    {getProgrammablesParDate(new Date(year, month, day)).map((programmable) =>(
+                      <EventPill key={programmable.id} programmable={programmable} estVueSemaine={false} />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div key={index}  className="day empty" />
+              )
+            )}
           </div>
-        ))}
+        ) : (
+          <div className="week-view-container">
+            {/* En-tête des jours de la semaine */}
+            <div className="week-header">
+              <div className="time-gutter-header" />
+              {joursSemaine.map((dayDate, i) => (
+                <div key={i} className="week-day-column-header">
+                  <span className="week-day-label">{weekDays[dayDate.getDay()]}</span>
+                  <span className={`week-day-number ${isDateToday(dayDate) ? "today" : ""}`}>
+                    {dayDate.getDate()}
+                  </span>
+                </div>
+              ))}
+            </div>
 
-        {days.map((day, index) =>
-          day ? (
-            <div
-              key={index}
-              className={`day ${isToday(day) ? "today" : ""}`}
-            >
-              <span className="day-number">{day}</span>
-              <div className="day-programmables">
-                {getProgrammablesForDay(day).map((programmable) =>(
-                  <EventPill key={programmable.id} programmable={programmable} />
-                ))}
+            {/* Barre des événements multi-jours */}
+            <div className="week-all-day-row">
+              <div className="time-gutter-header" />
+              <div className="all-day-events-grid">
+                {getEvenementsSemaine().map(e => {
+                  const { colDepart, span } = calculerPositionEvenement(e);
+
+                  if (span <= 0) return null;
+
+                  return (
+                    <div 
+                      key={e.id}
+                      className="all-day-event-wrapper"
+                      style={{ gridColumn: `${colDepart} / span ${span}` }}
+                    >
+                      <EventPill programmable={e} estVueSemaine={true} />
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          ) : (
-            <div key={index}  className="day empty" />
-          )
+
+            {/* Grille horaire */}
+            <div className="week-grid">
+              <div className="time-gutter">
+                {Array.from({ length: 24 }).map((_, i) => (
+                  <div key={i} className="hour-label">
+                    {i === 0 ? "12 AM" : i < 12 ? `${i} AM` : i === 12 ? "12 PM" : `${i - 12} PM`}
+                  </div>
+                ))}
+              </div>
+              {getWeekDays().map((dayDate, i) => (
+                <div key={i} className="week-day-column">
+                  {Array.from({ length: 24 }).map((_, h) => (
+                    <div key={h} className="time-slot" />
+                  ))}
+                  {getProgrammablesParDate(dayDate).filter(p => p.type === "activite").map((p) => {
+                    const start = new Date(p.dateDepart);
+                    const hour = start.getHours();
+                    const minutes = start.getMinutes();
+                    // 60px par heure, donc on calcule le top
+                    const top = hour * 60 + (minutes / 60) * 60;
+                    
+                    // On calcule la hauteur : activités utilisent dureeHeures, événements on met 30px par défaut
+                    const hauteur = p.type === "activite" ? p.dureeHeures * 60 : 30;
+
+                    return (
+                      <div 
+                        key={p.id} 
+                        className="week-event-wrapper"
+                        style={{ top: `${top}px`, height: `${hauteur}px` }}
+                      >
+                        <EventPill programmable={p} estVueSemaine={true} />
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
+
+
+        <div className="calendar-legend">
+          <span className="legend-item">
+            <span className="legend-dot" style={{ backgroundColor: "#ef4444" }} />
+            Urgent
+          </span>
+          <span className="legend-item">
+            <span className="legend-dot" style={{ backgroundColor: "#2563eb" }} />
+            Activité
+          </span>
+          <span className="legend-item">
+            <span className="legend-dot" style={{ backgroundColor: "#10b981" }} />
+            Basse priorité
+          </span>
+          <span className="legend-item">
+            <span className="legend-dot" style={{ backgroundColor: "#8b5cf6" }} />
+            Événement
+          </span>
+        </div>
       </div>
+    
+      {showModal && (
+        <CreateProgrammable
+          defaultDate={selectedDate}
+          onClose={() => setShowModal(false)}
+          onCreated={handleCreated}
+        />
+      )}
 
-
-
-      <div className="calendar-legend">
-        <span className="legend-item">
-          <span className="legend-dot" style={{ backgroundColor: "#ef4444" }} />
-          Urgent
-        </span>
-        <span className="legend-item">
-          <span className="legend-dot" style={{ backgroundColor: "#2563eb" }} />
-          Activité
-        </span>
-        <span className="legend-item">
-          <span className="legend-dot" style={{ backgroundColor: "#10b981" }} />
-          Basse priorité
-        </span>
-        <span className="legend-item">
-          <span className="legend-dot" style={{ backgroundColor: "#8b5cf6" }} />
-          Événement
-        </span>
-      </div>
-    </div>
+    </>
   );
 }
