@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import "../styles/calendar.css";
 import { api, type ActiviteDTO, type EvenementDTO, type ProgrammableDTO, type UserDTO } from "../services/api";
 import { useRouteLoaderData } from "react-router-dom";
+import CreateProgrammable from "./CreateProgrammable";
 
 
 const PRIORITYTOCOLOR: Record<string, string> = {
@@ -34,6 +35,8 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
   const [date, setDate] = useState(new Date());
   const [activites, setActivites] = useState<ActiviteDTO[]>([]);
   const [evenements, setEvenements] = useState<EvenementDTO[]>([]);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   const user = useRouteLoaderData("root") as UserDTO;
 
 
@@ -119,6 +122,26 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
     });
   }, [user?.id]);
 
+
+
+
+  const handleCreated = (item: ProgrammableDTO) => {
+    if (item.type === "activite"){
+      setActivites(prev => [...prev, item as ActiviteDTO])
+    }
+    else {
+      setEvenements(prev => [...prev, item as EvenementDTO])
+    }
+  }
+
+  const handleDayClicked = (day : number) => {
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const dateString = `${year}-${pad(month + 1)}-${pad(day)}T08:00`;
+    setSelectedDate(dateString)
+    setShowModal(true)
+  }
+
+
   /**
    * Récupère les programmables pour une date précise
    * On compare juste l'année, le mois et le jour pour pas avoir de trouble avec les heures
@@ -189,136 +212,159 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
   const days = getDays();
 
   return (
-    <div className="calendar-container">
-      <div className="calendar-header">
-        <button onClick={allerPrecedent}>‹</button>
-        <h2>{titreHeader}</h2>
-        <button onClick={allerSuivant}>›</button>
-      </div>
 
-      {view === "month" ? (
-        <div className="calendar-grid">
-          {weekDays.map((day) => (
-            <div key={day} className="header-day">
-              {day}
-            </div>
-          ))}
+    <>
+    
+      <div className="calendar-container">
+        <div className="calendar-header">
+          <button onClick={allerPrecedent}>‹</button>
+          <h2>{titreHeader}</h2>
+          <button onClick={allerSuivant}>›</button>
 
-          {days.map((day, index) =>
-            day ? (
-              <div
-                key={index}
-                className={`day ${isToday(day) ? "today" : ""}`}
-              >
-                <span className="day-number">{day}</span>
-                <div className="day-programmables">
-                  {getProgrammablesParDate(new Date(year, month, day)).map((programmable) =>(
-                    <EventPill key={programmable.id} programmable={programmable} estVueSemaine={false} />
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div key={index}  className="day empty" />
-            )
-          )}
+          <button
+            className="add-btn"
+            onClick={() => { setSelectedDate(undefined); setShowModal(true); }}
+            title="Créer un élément"
+          >
+            +
+          </button>
+
         </div>
-      ) : (
-        <div className="week-view-container">
-          {/* En-tête des jours de la semaine */}
-          <div className="week-header">
-            <div className="time-gutter-header" />
-            {joursSemaine.map((dayDate, i) => (
-              <div key={i} className="week-day-column-header">
-                <span className="week-day-label">{weekDays[dayDate.getDay()]}</span>
-                <span className={`week-day-number ${isDateToday(dayDate) ? "today" : ""}`}>
-                  {dayDate.getDate()}
-                </span>
+
+        {view === "month" ? (
+          <div className="calendar-grid">
+            {weekDays.map((day) => (
+              <div key={day} className="header-day">
+                {day}
               </div>
             ))}
-          </div>
 
-          {/* Barre des événements multi-jours */}
-          <div className="week-all-day-row">
-            <div className="time-gutter-header" />
-            <div className="all-day-events-grid">
-              {getEvenementsSemaine().map(e => {
-                const { colDepart, span } = calculerPositionEvenement(e);
-
-                if (span <= 0) return null;
-
-                return (
-                  <div 
-                    key={e.id}
-                    className="all-day-event-wrapper"
-                    style={{ gridColumn: `${colDepart} / span ${span}` }}
-                  >
-                    <EventPill programmable={e} estVueSemaine={true} />
+            {days.map((day, index) =>
+              day ? (
+                <div
+                  key={index}
+                  className={`day ${isToday(day) ? "today" : ""}`}
+                  onClick={() => handleDayClicked(day)}
+                >
+                  <span className="day-number">{day}</span>
+                  <div className="day-programmables">
+                    {getProgrammablesParDate(new Date(year, month, day)).map((programmable) =>(
+                      <EventPill key={programmable.id} programmable={programmable} estVueSemaine={false} />
+                    ))}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              ) : (
+                <div key={index}  className="day empty" />
+              )
+            )}
           </div>
-
-          {/* Grille horaire */}
-          <div className="week-grid">
-            <div className="time-gutter">
-              {Array.from({ length: 24 }).map((_, i) => (
-                <div key={i} className="hour-label">
-                  {i === 0 ? "12 AM" : i < 12 ? `${i} AM` : i === 12 ? "12 PM" : `${i - 12} PM`}
+        ) : (
+          <div className="week-view-container">
+            {/* En-tête des jours de la semaine */}
+            <div className="week-header">
+              <div className="time-gutter-header" />
+              {joursSemaine.map((dayDate, i) => (
+                <div key={i} className="week-day-column-header">
+                  <span className="week-day-label">{weekDays[dayDate.getDay()]}</span>
+                  <span className={`week-day-number ${isDateToday(dayDate) ? "today" : ""}`}>
+                    {dayDate.getDate()}
+                  </span>
                 </div>
               ))}
             </div>
-            {getWeekDays().map((dayDate, i) => (
-              <div key={i} className="week-day-column">
-                {Array.from({ length: 24 }).map((_, h) => (
-                  <div key={h} className="time-slot" />
-                ))}
-                {getProgrammablesParDate(dayDate).filter(p => p.type === "activite").map((p) => {
-                  const start = new Date(p.dateDepart);
-                  const hour = start.getHours();
-                  const minutes = start.getMinutes();
-                  // 60px par heure, donc on calcule le top
-                  const top = hour * 60 + (minutes / 60) * 60;
-                  
-                  // On calcule la hauteur : activités utilisent dureeHeures, événements on met 30px par défaut
-                  const hauteur = p.type === "activite" ? p.dureeHeures * 60 : 30;
+
+            {/* Barre des événements multi-jours */}
+            <div className="week-all-day-row">
+              <div className="time-gutter-header" />
+              <div className="all-day-events-grid">
+                {getEvenementsSemaine().map(e => {
+                  const { colDepart, span } = calculerPositionEvenement(e);
+
+                  if (span <= 0) return null;
 
                   return (
                     <div 
-                      key={p.id} 
-                      className="week-event-wrapper"
-                      style={{ top: `${top}px`, height: `${hauteur}px` }}
+                      key={e.id}
+                      className="all-day-event-wrapper"
+                      style={{ gridColumn: `${colDepart} / span ${span}` }}
                     >
-                      <EventPill programmable={p} estVueSemaine={true} />
+                      <EventPill programmable={e} estVueSemaine={true} />
                     </div>
                   );
                 })}
               </div>
-            ))}
+            </div>
+
+            {/* Grille horaire */}
+            <div className="week-grid">
+              <div className="time-gutter">
+                {Array.from({ length: 24 }).map((_, i) => (
+                  <div key={i} className="hour-label">
+                    {i === 0 ? "12 AM" : i < 12 ? `${i} AM` : i === 12 ? "12 PM" : `${i - 12} PM`}
+                  </div>
+                ))}
+              </div>
+              {getWeekDays().map((dayDate, i) => (
+                <div key={i} className="week-day-column">
+                  {Array.from({ length: 24 }).map((_, h) => (
+                    <div key={h} className="time-slot" />
+                  ))}
+                  {getProgrammablesParDate(dayDate).filter(p => p.type === "activite").map((p) => {
+                    const start = new Date(p.dateDepart);
+                    const hour = start.getHours();
+                    const minutes = start.getMinutes();
+                    // 60px par heure, donc on calcule le top
+                    const top = hour * 60 + (minutes / 60) * 60;
+                    
+                    // On calcule la hauteur : activités utilisent dureeHeures, événements on met 30px par défaut
+                    const hauteur = p.type === "activite" ? p.dureeHeures * 60 : 30;
+
+                    return (
+                      <div 
+                        key={p.id} 
+                        className="week-event-wrapper"
+                        style={{ top: `${top}px`, height: `${hauteur}px` }}
+                      >
+                        <EventPill programmable={p} estVueSemaine={true} />
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
           </div>
+        )}
+
+
+
+        <div className="calendar-legend">
+          <span className="legend-item">
+            <span className="legend-dot" style={{ backgroundColor: "#ef4444" }} />
+            Urgent
+          </span>
+          <span className="legend-item">
+            <span className="legend-dot" style={{ backgroundColor: "#2563eb" }} />
+            Activité
+          </span>
+          <span className="legend-item">
+            <span className="legend-dot" style={{ backgroundColor: "#10b981" }} />
+            Basse priorité
+          </span>
+          <span className="legend-item">
+            <span className="legend-dot" style={{ backgroundColor: "#8b5cf6" }} />
+            Événement
+          </span>
         </div>
+      </div>
+    
+      {showModal && (
+        <CreateProgrammable
+          defaultDate={selectedDate}
+          onClose={() => setShowModal(false)}
+          onCreated={handleCreated}
+        />
       )}
 
-
-
-      <div className="calendar-legend">
-        <span className="legend-item">
-          <span className="legend-dot" style={{ backgroundColor: "#ef4444" }} />
-          Urgent
-        </span>
-        <span className="legend-item">
-          <span className="legend-dot" style={{ backgroundColor: "#2563eb" }} />
-          Activité
-        </span>
-        <span className="legend-item">
-          <span className="legend-dot" style={{ backgroundColor: "#10b981" }} />
-          Basse priorité
-        </span>
-        <span className="legend-item">
-          <span className="legend-dot" style={{ backgroundColor: "#8b5cf6" }} />
-          Événement
-        </span>
-      </div>
-    </div>
+    </>
   );
 }
