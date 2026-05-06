@@ -50,15 +50,24 @@ export type ProgrammableDTO = ActiviteDTO | EvenementDTO;
 
 export type AuthCredentials = { email: string; password?: string; nomComplet?: string };
 
-async function parseError(response: Response): Promise<Error> {
+async function parseError(response: Response): Promise<Error & { isConflict?: boolean; conflictMessage?: string }> {
   let msg = "Erreur de connexion à l'API";
+  let isConflict = false;
+  let conflictMessage: string | undefined;
   try {
     const errorData = await response.json();
     msg = errorData.message || msg;
+    if (response.status === 409) {
+      isConflict = true;
+      conflictMessage = errorData.message;
+    }
   } catch {
     // Ignorer si la réponse n'est pas du JSON valide
   }
-  return new Error(msg);
+  const err = new Error(msg) as Error & { isConflict?: boolean; conflictMessage?: string };
+  err.isConflict = isConflict;
+  err.conflictMessage = conflictMessage;
+  return err;
 }
 
 async function handleResponse(response: Response) {
@@ -125,6 +134,7 @@ export type CreateActivitePayload = {
   dateDepart: string;
   dureeHeures: number;
   priorite: "URGENT" | "IMPORTANCE_MOYENNE" | "IMPORTANCE_BASSE";
+  forceCreate?: boolean;
 };
  
 export type CreateEvenementPayload = {

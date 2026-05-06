@@ -25,45 +25,60 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
-    const handleSubmit = async (event : React.FormEvent) => {
-        event.preventDefault();
+    // Conflict state: when the API returns a 409, we store the conflict message
+    // and wait for the user to confirm they want to force-create
+    const [conflitMessage, setConflitMessage] = useState<string | null>(null);
+
+    const soumettre = async (forceCreate: boolean) => {
         setError(null);
         setLoading(true);
 
         try {
+            let created: ProgrammableDTO;
 
-            let created : ProgrammableDTO;
-
-            if (type === "activite"){
-
+            if (type === "activite") {
                 created = await programmableApi.createActivite({
                     nom,
                     description: description || undefined,
                     dateDepart,
                     dureeHeures,
-                    priorite,                    
+                    priorite,
+                    forceCreate,
                 });
             } else {
                 created = await programmableApi.createEvenement({
-                nom,
-                description: description || undefined,
-                dateDepart,
-                dureeJours,
+                    nom,
+                    description: description || undefined,
+                    dateDepart,
+                    dureeJours,
                 });
             }
 
-                    
             onCreated(created);
             onClose();
-            } catch (err: any) {
-            setError(err.message ?? "Une erreur est survenue");
-            } finally {
+        } catch (err: any) {
+            if (err.isConflict) {
+                // Parse the conflicting activity name from the backend message
+                // Message format: "Chevauchement avec l'activité "X" (début : ...)"
+                setConflitMessage(err.conflictMessage ?? err.message);
+            } else {
+                setError(err.message ?? "Une erreur est survenue");
+            }
+        } finally {
             setLoading(false);
-
         }
+    };
 
+    const handleSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+        setConflitMessage(null);
+        await soumettre(false);
+    };
 
-    }
+    const handleForceCreate = async () => {
+        setConflitMessage(null);
+        await soumettre(true);
+    };
 
     return (
 
@@ -172,14 +187,42 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
                     </div>
                 )}
 
-                 
+                {/* Conflict warning — shown instead of a generic error */}
+                {conflitMessage && (
+                    <div className={styles.conflitWarning}>
+                        <span className={styles.conflitIcon}>⚠️</span>
+                        <div className={styles.conflitBody}>
+                            <p className={styles.conflitText}>{conflitMessage}</p>
+                            <p className={styles.conflitSubtext}>Voulez-vous quand même créer cette activité en chevauchement?</p>
+                        </div>
+                        <div className={styles.conflitActions}>
+                            <button
+                                type="button"
+                                className={styles.conflitCancelBtn}
+                                onClick={() => setConflitMessage(null)}
+                                disabled={loading}
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                type="button"
+                                className={styles.conflitConfirmBtn}
+                                onClick={handleForceCreate}
+                                disabled={loading}
+                            >
+                                {loading ? "Création..." : "Quand même créer"}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                     {error && <p className={styles.error}>{error}</p>}
             
                     <div className={styles.actions}>
                         <button type="button" className={styles.cancelBtn} onClick={onClose}>
                             Annuler
                         </button>
-                        <button type="submit" className={styles.submitBtn} disabled={loading}>
+                        <button type="submit" className={styles.submitBtn} disabled={loading || !!conflitMessage}>
                             {loading ? "Création..." : "Créer"}
                         </button>
                     </div>
