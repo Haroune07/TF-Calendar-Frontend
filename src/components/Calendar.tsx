@@ -146,21 +146,30 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
    * Récupère les programmables pour une date précise
    * On compare juste l'année, le mois et le jour pour pas avoir de trouble avec les heures
    */
+  /**
+   * Parse la partie date (YYYY-MM-DD) d'une chaîne ISO directement,
+   * sans conversion timezone, pour éviter le décalage UTC→local.
+   */
+  function parseDateSansTimezone(dateStr: string | Date): Date {
+    const str = typeof dateStr === 'string' ? dateStr : dateStr.toISOString();
+    const [year, month, day] = str.split('T')[0].split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+
   function getProgrammablesParDate(d: Date): ProgrammableDTO[] {
     const tous = [...activites, ...evenements];
+    const jourCible = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
     return tous.filter((p) => {
-      const debut = new Date(p.dateDepart);
-      
-      // On crée des dates "pures" (minuit) pour comparer
-      const jourDebut = new Date(debut.getFullYear(), debut.getMonth(), debut.getDate());
-      const jourCible = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      // Utiliser le parsing direct pour éviter le décalage timezone
+      const jourDebut = parseDateSansTimezone(p.dateDepart);
 
       if (p.type === "evenement" && p.dureeJours) {
         const jourFin = new Date(jourDebut);
         jourFin.setDate(jourFin.getDate() + p.dureeJours - 1);
         return jourCible >= jourDebut && jourCible <= jourFin;
       }
-      
+
       return jourCible.getTime() === jourDebut.getTime();
     });
   }
@@ -173,12 +182,11 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
     const finSemaine = new Date(joursSemaine[6].getFullYear(), joursSemaine[6].getMonth(), joursSemaine[6].getDate(), 23, 59, 59);
 
     return evenements.filter(e => {
-      const debut = new Date(e.dateDepart);
-      const fin = new Date(debut);
-      fin.setDate(fin.getDate() + (e.dureeJours || 1) - 1);
-      
-      const d = new Date(debut.getFullYear(), debut.getMonth(), debut.getDate());
-      const f = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate(), 23, 59, 59);
+      // Parsing direct pour éviter le décalage timezone
+      const d = parseDateSansTimezone(e.dateDepart);
+      const f = new Date(d);
+      f.setDate(f.getDate() + (e.dureeJours || 1) - 1);
+      f.setHours(23, 59, 59);
 
       return d <= finSemaine && f >= debutSemaine;
     });
@@ -188,13 +196,10 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
    * Calcule où l'événement doit se placer dans la grille (colonne et étalement)
    */
   function calculerPositionEvenement(e: EvenementDTO) {
-    const debutE = new Date(e.dateDepart);
-    const debutSemaine = joursSemaine[0];
-    
-    const d1 = new Date(debutE.getFullYear(), debutE.getMonth(), debutE.getDate());
-    const d2 = new Date(debutSemaine.getFullYear(), debutSemaine.getMonth(), debutSemaine.getDate());
-    
-    // Utilisation de Math.round pour éviter les décalages de quelques ms
+    // Parsing direct pour éviter le décalage timezone
+    const d1 = parseDateSansTimezone(e.dateDepart);
+    const d2 = new Date(joursSemaine[0].getFullYear(), joursSemaine[0].getMonth(), joursSemaine[0].getDate());
+
     let colDepart = Math.round((d1.getTime() - d2.getTime()) / (24 * 3600 * 1000)) + 1;
     let span = e.dureeJours || 1;
 
@@ -207,6 +212,37 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
     }
 
     return { colDepart, span };
+  }
+
+  /**
+   * Assigne une ligne (grid-row) à chaque événement de la barre all-day
+   * pour éviter le chevauchement visuel entre événements qui partagent des colonnes.
+   */
+  function assignerLignesEvenements(evts: EvenementDTO[]): Map<number, number> {
+    const lignes = new Map<number, number>();
+    // On garde trace de l'occupation: { colDepart, colFin, ligne }[]
+    const occupees: Array<{ colDepart: number; colFin: number; ligne: number }> = [];
+
+    for (const e of evts) {
+      const { colDepart, span } = calculerPositionEvenement(e);
+      if (span <= 0) continue;
+      const colFin = colDepart + span;
+
+      // Trouver la première ligne libre (sans chevauchement de colonnes)
+      let ligne = 1;
+      while (true) {
+        const conflit = occupees.some(
+          o => o.ligne === ligne && colDepart < o.colFin && colFin > o.colDepart
+        );
+        if (!conflit) break;
+        ligne++;
+      }
+
+      lignes.set(e.id, ligne);
+      occupees.push({ colDepart, colFin, ligne });
+    }
+
+    return lignes;
   }
 
   const days = getDays();
@@ -277,21 +313,26 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
             <div className="week-all-day-row">
               <div className="time-gutter-header" />
               <div className="all-day-events-grid">
-                {getEvenementsSemaine().map(e => {
-                  const { colDepart, span } = calculerPositionEvenement(e);
+                {(() => {
+                  const evtsSemaine = getEvenementsSemaine();
+                  const lignes = assignerLignesEvenements(evtsSemaine);
+                  return evtsSemaine.map(e => {
+                    const { colDepart, span } = calculerPositionEvenement(e);
+                    const ligne = lignes.get(e.id) ?? 1;
 
-                  if (span <= 0) return null;
+                    if (span <= 0) return null;
 
-                  return (
-                    <div 
-                      key={e.id}
-                      className="all-day-event-wrapper"
-                      style={{ gridColumn: `${colDepart} / span ${span}` }}
-                    >
-                      <EventPill programmable={e} estVueSemaine={true} />
-                    </div>
-                  );
-                })}
+                    return (
+                      <div
+                        key={e.id}
+                        className="all-day-event-wrapper"
+                        style={{ gridColumn: `${colDepart} / span ${span}`, gridRow: ligne }}
+                      >
+                        <EventPill programmable={e} estVueSemaine={true} />
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             </div>
 
