@@ -71,7 +71,7 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
             <div className={styles.backdrop} onClick={onClose}></div>
 
             <div className={styles.modal}>
-                <div className="styles.header">
+                <div className={styles.header}>
                     <h2 className={styles.title}>Nouvel élément</h2>
                     <button className={styles.closeBtn} onClick={onClose} >✕</button>
                 </div>
@@ -113,7 +113,6 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
                         type="text"
                         value={description}
                         onChange={e => setDescription(e.target.value)}
-                        required
                     />
                 </div>     
 
@@ -126,7 +125,7 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
                         type={type === "activite" ? "datetime-local" : "date"}
                         value={type === "activite" ? dateDepart : dateDepart.slice(0, 10)}
                         onChange={e => setDateDepart(e.target.value)}
-                        
+                        required
                     />
                 </div>
 
