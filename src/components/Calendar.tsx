@@ -391,7 +391,7 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
                         className="all-day-event-wrapper"
                         style={{ gridColumn: `${colDepart} / span ${span}`, gridRow: ligne }}
                       >
-                        <EventPill programmable={e} estVueSemaine={true} />
+                        <EventPill programmable={e} estVueSemaine={false} />
                       </div>
                     );
                   });
