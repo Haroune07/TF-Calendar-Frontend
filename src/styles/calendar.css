@@ -288,27 +288,29 @@
 .week-all-day-row {
   display: grid;
   grid-template-columns: 60px repeat(7, 1fr);
+  align-items: start; /* Empêche le conteneur de forcer une hauteur fixe sur ses enfants */
   border-bottom: 1px solid #eee;
   background-color: #fafafa;
   min-height: 40px;
-  height: auto; /* Permet à la ligne de grandir */
+  height: max-content; /* Force le conteneur à prendre toute la hauteur de son contenu */
 }
 
 .all-day-events-grid {
   grid-column: 2 / span 7;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: min-content;
+  grid-auto-rows: 30px; /* Force chaque ligne à faire 30px */
   gap: 2px;
   padding: 4px 0;
   border-right: 1px solid #f0f0f0;
-  min-height: 30px; /* Assure qu'on voit au moins une ligne */
+  min-height: 30px;
 }
 
 .all-day-event-wrapper {
   padding: 0 2px;
   min-height: 28px;
   display: flex;
+  width: 100%;
   z-index: 10; /* Assure que c'est au-dessus */
 }
 
