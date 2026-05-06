@@ -1,6 +1,6 @@
 import { Outlet, Link, Form } from "react-router-dom";
 import styles from "./MainLayout.module.css";
-
+import Navbar from "../components/Navbar";
 export default function MainLayout() {
   return (
     <div className={styles.container}>
@@ -19,9 +19,12 @@ export default function MainLayout() {
         </nav>
       </aside>
 
+      <div className={styles.content}>
+        <Navbar/>
       <main className={styles.mainContent}>
         <Outlet />
       </main>
+      </div>
     </div>
   );
 }
