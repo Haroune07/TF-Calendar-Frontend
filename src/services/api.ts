@@ -153,6 +153,10 @@ export const api = {
     });
   },
 
+  async getFriends(): Promise<UserDTO[]>{
+    return fetchAPI("/users/friends")
+  },
+
 };
 
 

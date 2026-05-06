@@ -1,17 +1,15 @@
 import { useState } from "react";
-import { useRouteLoaderData } from "react-router-dom";
-import type { UserDTO } from "../services/api";
 import Calendar from "../components/Calendar";
 import styles from "../styles/HomePage.module.css";
 
 export default function HomePage() {
-  const user = useRouteLoaderData("root") as UserDTO;
+  
   const [view, setView] = useState<"week" | "month">("month");
 
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.title}>Bonjour, {user?.nomComplet || user?.email}</h1>
+        {/* <h1 className={styles.title}>Bonjour, {user?.nomComplet || user?.email}</h1> */}
         <div className={styles.toggleGroup}>
           <button 
             className={`${styles.toggleBtn} ${view === "month" ? styles.active : ""}`}
