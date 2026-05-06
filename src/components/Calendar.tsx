@@ -245,6 +245,69 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
     return lignes;
   }
 
+  /**
+   * Calcule le layout (top, height, left, width) pour les activités d'une journée
+   * afin que celles qui se chevauchent s'affichent côte-à-côte
+   */
+  function getLayoutForDay(dayDate: Date) {
+    const acts = getProgrammablesParDate(dayDate).filter(p => p.type === "activite") as ActiviteDTO[];
+    
+    const events = acts.map(p => {
+      const start = new Date(p.dateDepart);
+      const top = start.getHours() * 60 + start.getMinutes();
+      const height = p.dureeHeures * 60;
+      return { p, top, bottom: top + height, column: 0, width: 100, left: 0 };
+    });
+
+    events.sort((a, b) => a.top - b.top || b.bottom - a.bottom);
+
+    const clusters: typeof events[] = [];
+    let currentCluster: typeof events = [];
+    let clusterEnd = 0;
+
+    events.forEach(ev => {
+      if (ev.top >= clusterEnd && currentCluster.length > 0) {
+        clusters.push(currentCluster);
+        currentCluster = [];
+      }
+      currentCluster.push(ev);
+      clusterEnd = Math.max(clusterEnd, ev.bottom);
+    });
+    if (currentCluster.length > 0) {
+      clusters.push(currentCluster);
+    }
+
+    clusters.forEach(cluster => {
+      const columns: typeof events[] = [];
+      
+      cluster.forEach(ev => {
+        let placed = false;
+        for (let i = 0; i < columns.length; i++) {
+          const lastEv = columns[i][columns[i].length - 1];
+          // On ajoute une petite marge pour le visuel, si les heures se touchent exactement on ne les met pas côté à côté
+          if (lastEv.bottom <= ev.top) { 
+            columns[i].push(ev);
+            ev.column = i;
+            placed = true;
+            break;
+          }
+        }
+        if (!placed) {
+          columns.push([ev]);
+          ev.column = columns.length - 1;
+        }
+      });
+
+      const maxCols = columns.length;
+      cluster.forEach(ev => {
+        ev.width = 100 / maxCols;
+        ev.left = ev.column * ev.width;
+      });
+    });
+
+    return events;
+  }
+
   const days = getDays();
 
   return (
@@ -350,27 +413,23 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
                   {Array.from({ length: 24 }).map((_, h) => (
                     <div key={h} className="time-slot" />
                   ))}
-                  {getProgrammablesParDate(dayDate).filter(p => p.type === "activite").map((p) => {
-                    const start = new Date(p.dateDepart);
-                    const hour = start.getHours();
-                    const minutes = start.getMinutes();
-                    // 60px par heure, donc on calcule le top
-                    const top = hour * 60 + (minutes / 60) * 60;
-                    
-                    // On calcule la hauteur : activités utilisent dureeHeures, événements on met 30px par défaut
-                    const hauteur = p.type === "activite" ? p.dureeHeures * 60 : 30;
-
-                    return (
-                      <div 
-                        key={p.id} 
-                        className="week-event-wrapper"
-                        style={{ top: `${top}px`, height: `${hauteur}px` }}
-                      >
-                        <EventPill programmable={p} estVueSemaine={true} />
-                      </div>
-                    );
-                  })}
+                  {getLayoutForDay(dayDate).map(({ p, top, height, width, left }) => (
+                    <div 
+                      key={p.id} 
+                      className="week-event-wrapper"
+                      style={{ 
+                        top: `${top}px`, 
+                        height: `${height}px`,
+                        left: `calc(${left}% + 2px)`,
+                        width: `calc(${width}% - 4px)`,
+                        position: 'absolute'
+                      }}
+                    >
+                      <EventPill programmable={p} estVueSemaine={true} />
+                    </div>
+                  ))}
                 </div>
+
               ))}
             </div>
           </div>
