@@ -45,6 +45,7 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
                     priorite,
                     forceCreate,
                 });
+                created.type = "activite";
             } else {
                 created = await programmableApi.createEvenement({
                     nom,
@@ -52,6 +53,7 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
                     dateDepart,
                     dureeJours,
                 });
+                created.type = "evenement";
             }
 
             onCreated(created);
