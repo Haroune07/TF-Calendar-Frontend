@@ -205,6 +205,7 @@
   background: white;
   z-index: 10;
   border-bottom: 1px solid #eee;
+  flex-shrink: 0;
 }
 
 .time-gutter-header {
@@ -293,6 +294,7 @@
   background-color: #fafafa;
   min-height: 40px;
   height: max-content; /* Force le conteneur à prendre toute la hauteur de son contenu */
+  flex-shrink: 0; /* Empêche le conteneur d'être écrasé par la grille horaire dans le flexbox */
 }
 
 .all-day-events-grid {
