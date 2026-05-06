@@ -132,6 +132,7 @@
   text-overflow: ellipsis;
   cursor: pointer;
   transition: opacity 0.15s;
+  width: 100%;
 }
 
 .event-pill:hover {
