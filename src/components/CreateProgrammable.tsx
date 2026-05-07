@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { programmableApi, type CreateActivitePayload, type ProgrammableDTO } from "../services/api";
-import styles from "../styles/CreateProgrammableModal.module.css";
+import styles from "../styles/Createprogrammablemodal.module.css";
 
 
 type Props = {
