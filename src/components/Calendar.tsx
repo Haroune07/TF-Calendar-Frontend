@@ -256,7 +256,7 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
       const start = new Date(p.dateDepart);
       const top = start.getHours() * 60 + start.getMinutes();
       const height = p.dureeHeures * 60;
-      return { p, top, bottom: top + height, column: 0, width: 100, left: 0 };
+      return { p, top, bottom: top + height, column: 0, width: 100, left: 0, height:height };
     });
 
     events.sort((a, b) => a.top - b.top || b.bottom - a.bottom);

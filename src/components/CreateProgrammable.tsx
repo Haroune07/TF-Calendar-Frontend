@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { programmableApi, type CreateActivitePayload, type CreateEvenementPayload, type ProgrammableDTO } from "../services/api";
+import { programmableApi, type CreateActivitePayload, type ProgrammableDTO } from "../services/api";
 import styles from "../styles/CreateProgrammableModal.module.css";
 
 
