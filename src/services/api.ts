@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3000";
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 export type UserDTO = {
   id: number;
@@ -100,7 +100,7 @@ async function handleResponse(response: Response) {
 }
 
 async function fetchAPI(endpoint: string, options: RequestInit = {}) {
-  const url = `${API_URL}${endpoint}`;
+  const url = `${API_URL}/api${endpoint}`;
   const response = await fetch(url, { ...options, credentials: "include" });
   return handleResponse(response);
 }
