@@ -185,6 +185,30 @@ export type CreateEvenementPayload = {
   dureeJours: number;
 };
 
+export type ConflitInfoDTO = {
+  activiteIdA: number;
+  nomA: string;
+  debutA: string;
+  finA: string;
+  activiteIdB: number;
+  nomB: string;
+  debutB: string;
+  finB: string;
+  chevauchementMinutes: number;
+};
+
+export type CreneauDisponibleDTO = {
+  debut: string;
+  fin: string;
+  dureeHeures: number;
+};
+
+export type ReplanifierReponseDTO = {
+  activite: ActiviteDTO;
+  conflitDetecte: boolean;
+  suggestions: CreneauDisponibleDTO[];
+};
+
 export const programmableApi = {
   async createActivite(data: CreateActivitePayload): Promise<ActiviteDTO> {
     return fetchAPI("/programmable/activite", {
@@ -201,4 +225,48 @@ export const programmableApi = {
       body: JSON.stringify(data),
     });
   },
+
+  async getConflits(): Promise<ConflitInfoDTO[]> {
+    return fetchAPI("/programmable/conflits");
+  },
+
+  async getCreneauxDisponibles(dateDebut: string, dateFin: string, dureeHeures: number): Promise<CreneauDisponibleDTO[]> {
+    const params = new URLSearchParams({
+      dateDebut,
+      dateFin,
+      dureeHeures: dureeHeures.toString(),
+    });
+    return fetchAPI(`/programmable/creneaux-disponibles?${params.toString()}`);
+  },
+
+  async replanifierActivite(id: number, nouvelleDate: string): Promise<ReplanifierReponseDTO> {
+    return fetchAPI(`/programmable/activite/${id}/replanifier`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nouvelleDateDepart: nouvelleDate }),
+    });
+  },
+
+  async deleteProgrammable(id: number): Promise<void> {
+    return fetchAPI(`/programmable/${id}`, {
+      method: "DELETE",
+    });
+  },
+
+  async updateEvenement(id: number, data: Partial<CreateEvenementPayload>): Promise<EvenementDTO> {
+    return fetchAPI(`/programmable/evenement/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateActivite(id: number, data: Partial<CreateActivitePayload>): Promise<ActiviteDTO> {
+    return fetchAPI(`/programmable/activite/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  }
 };
+
