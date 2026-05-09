@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import "../styles/calendar.css";
-import { api, type ActiviteDTO, type EvenementDTO, type ProgrammableDTO, type UserDTO } from "../services/api";
+import { api, programmableApi, type ActiviteDTO, type EvenementDTO, type ProgrammableDTO, type UserDTO, type ConflitInfoDTO } from "../services/api";
 import { useRouteLoaderData } from "react-router-dom";
 import CreateProgrammable from "./CreateProgrammable";
+import DetailProgrammableModal from "./DetailProgrammableModal";
 
 
 const PRIORITYTOCOLOR: Record<string, string> = {
@@ -11,7 +12,12 @@ const PRIORITYTOCOLOR: Record<string, string> = {
   IMPORTANCE_BASSE: "#10b981",
 };
 
-function EventPill({ programmable, estVueSemaine }: { programmable: ProgrammableDTO, estVueSemaine?: boolean }) {
+function EventPill({ programmable, estVueSemaine, onClick, estEnConflit }: { 
+  programmable: ProgrammableDTO, 
+  estVueSemaine?: boolean,
+  onClick?: (p: ProgrammableDTO) => void,
+  estEnConflit?: boolean
+}) {
   const color =
     programmable.type === "activite"
       ? PRIORITYTOCOLOR[programmable.priorite ?? "IMPORTANCE_MOYENNE"]
@@ -19,24 +25,33 @@ function EventPill({ programmable, estVueSemaine }: { programmable: Programmable
  
   return (
     <div
-      className={`event-pill ${estVueSemaine ? "vue-semaine" : ""}`}
-      style={{ backgroundColor: color, height: estVueSemaine ? "100%" : "auto" }}
+      className={`event-pill ${estVueSemaine ? "vue-semaine" : ""} ${estEnConflit ? "en-conflit" : ""}`}
+      style={{ backgroundColor: color, height: estVueSemaine ? "100%" : "auto", position: "relative" }}
       title={`${programmable.nom}${programmable.description ? ` — ${programmable.description}` : ""}`}
+      onClick={(e) => {
+        if (onClick) {
+          e.stopPropagation(); // Empêche d'ouvrir le modal de création du jour
+          onClick(programmable);
+        }
+      }}
     >
       <span className="event-name">{programmable.nom}</span>
       {estVueSemaine && programmable.description && (
         <p className="event-desc-court">{programmable.description}</p>
       )}
+      {estEnConflit && <span className="conflict-badge" title="Conflit d'horaire">!</span>}
     </div>
   );
 }
 
-export default function Calendar({ view }: { view: "month" | "week" }) {
+export default function Calendar({ view, replanifierId }: { view: "month" | "week", replanifierId?: number | null }) {
   const [date, setDate] = useState(new Date());
   const [activites, setActivites] = useState<ActiviteDTO[]>([]);
   const [evenements, setEvenements] = useState<EvenementDTO[]>([]);
+  const [conflits, setConflits] = useState<ConflitInfoDTO[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
+  const [selectedItem, setSelectedItem] = useState<ProgrammableDTO | null>(null);
   const user = useRouteLoaderData("root") as UserDTO;
 
 
@@ -114,13 +129,29 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
     return d.toDateString() === today.toDateString();
   };
 
-  useEffect(() => {
+  const chargerDonnees = () => {
     if (!user?.id) return;
     api.getProgrammableByUser(user.id).then(programmable => {
-      setActivites(programmable.filter(p => p.type == "activite"))
-      setEvenements(programmable.filter(p => p.type == "evenement"))
+      setActivites(programmable.filter(p => p.type == "activite") as ActiviteDTO[]);
+      setEvenements(programmable.filter(p => p.type == "evenement") as EvenementDTO[]);
     });
+    // On charge aussi les conflits pour afficher les badges
+    programmableApi.getConflits().then(setConflits);
+  };
+
+  useEffect(() => {
+    chargerDonnees();
   }, [user?.id]);
+
+  // Si on reçoit un ID de replanification depuis l'extérieur (ex: panneau de conflits)
+  useEffect(() => {
+    if (replanifierId) {
+      const item = [...activites, ...evenements].find(i => i.id === replanifierId);
+      if (item) {
+        setSelectedItem(item);
+      }
+    }
+  }, [replanifierId, activites, evenements]);
 
 
 
@@ -132,7 +163,23 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
     else {
       setEvenements(prev => [...prev, item as EvenementDTO])
     }
+    programmableApi.getConflits().then(setConflits);
   }
+
+  const handleDeleted = (id: number) => {
+    setActivites(prev => prev.filter(a => a.id !== id));
+    setEvenements(prev => prev.filter(e => e.id !== id));
+    programmableApi.getConflits().then(setConflits);
+  };
+
+  const handleUpdated = (item: ProgrammableDTO) => {
+    if (item.type === "activite") {
+      setActivites(prev => prev.map(a => a.id === item.id ? (item as ActiviteDTO) : a));
+    } else {
+      setEvenements(prev => prev.map(e => e.id === item.id ? (item as EvenementDTO) : e));
+    }
+    programmableApi.getConflits().then(setConflits);
+  };
 
   const handleDayClicked = (day : number) => {
     const pad = (n: number) => String(n).padStart(2, "0");
@@ -166,12 +213,17 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
 
       if (p.type === "evenement" && p.dureeJours) {
         const jourFin = new Date(jourDebut);
-        jourFin.setDate(jourFin.getDate() + p.dureeJours - 1);
+        jourFin.setDate(jourFin.getDate() + (p.dureeJours || 1) - 1);
         return jourCible >= jourDebut && jourCible <= jourFin;
       }
 
       return jourCible.getTime() === jourDebut.getTime();
     });
+  }
+
+  // Vérifie si un programmable est en conflit avec un autre
+  function estEnConflit(id: number) {
+    return conflits.some(c => c.activiteIdA === id || c.activiteIdB === id);
   }
 
   /**
@@ -348,7 +400,13 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
                   <span className="day-number">{day}</span>
                   <div className="day-programmables">
                     {getProgrammablesParDate(new Date(year, month, day)).map((programmable) =>(
-                      <EventPill key={programmable.id} programmable={programmable} estVueSemaine={false} />
+                      <EventPill 
+                        key={programmable.id} 
+                        programmable={programmable} 
+                        estVueSemaine={false} 
+                        onClick={setSelectedItem}
+                        estEnConflit={estEnConflit(programmable.id)}
+                      />
                     ))}
                   </div>
                 </div>
@@ -391,7 +449,12 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
                         className="all-day-event-wrapper"
                         style={{ gridColumn: `${colDepart} / span ${span}`, gridRow: ligne }}
                       >
-                        <EventPill programmable={e} estVueSemaine={false} />
+                        <EventPill 
+                          programmable={e} 
+                          estVueSemaine={false} 
+                          onClick={setSelectedItem}
+                          estEnConflit={estEnConflit(e.id)}
+                        />
                       </div>
                     );
                   });
@@ -425,7 +488,12 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
                         position: 'absolute'
                       }}
                     >
-                      <EventPill programmable={p} estVueSemaine={true} />
+                      <EventPill 
+                        programmable={p} 
+                        estVueSemaine={true} 
+                        onClick={setSelectedItem}
+                        estEnConflit={estEnConflit(p.id)}
+                      />
                     </div>
                   ))}
                 </div>
@@ -462,6 +530,15 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
           defaultDate={selectedDate}
           onClose={() => setShowModal(false)}
           onCreated={handleCreated}
+        />
+      )}
+
+      {selectedItem && (
+        <DetailProgrammableModal
+          programmable={selectedItem}
+          onFermer={() => setSelectedItem(null)}
+          onSupprime={handleDeleted}
+          onMisAJour={handleUpdated}
         />
       )}
 
