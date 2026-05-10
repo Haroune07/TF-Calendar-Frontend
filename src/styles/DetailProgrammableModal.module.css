@@ -1,0 +1,203 @@
+.fond {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  animation: apparition 0.15s ease;
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 101;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 480px;
+  padding: 24px;
+  animation: glissementHaut 0.2s ease;
+}
+
+@keyframes apparition {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes glissementHaut {
+  from { opacity: 0; transform: translate(-50%, -46%); }
+  to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+.entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.titre {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.boutonFermer {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.boutonFermer:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.contenu {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.valeur {
+  font-size: 15px;
+  color: #1e293b;
+}
+
+.description {
+  font-size: 14px;
+  color: #475569;
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.boutonSupprimer {
+  padding: 10px 16px;
+  background: #fee2e2;
+  color: #ef4444;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.boutonSupprimer:hover {
+  background: #fecaca;
+}
+
+.boutonReplanifier {
+  flex: 1;
+  padding: 10px 16px;
+  background: #2563eb;
+  color: #white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.boutonReplanifier:hover {
+  background: #1d4ed8;
+}
+
+/* Zone de replanification */
+.zoneReplanifier {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.champDate {
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* Suggestions */
+.suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.titreSuggestions {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0369a1;
+}
+
+.grilleSuggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.suggestion {
+  padding: 10px;
+  background: white;
+  border: 1px solid #e0f2fe;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s;
+  text-align: left;
+}
+
+.suggestion:hover {
+  border-color: #0ea5e9;
+  background: #f0f9ff;
+  transform: translateX(4px);
+}
+
+.suggestionDate {
+  display: block;
+  font-weight: 600;
+  color: #0ea5e9;
+}
+
+.erreur {
+  color: #ef4444;
+  font-size: 13px;
+  margin-top: 8px;
+}

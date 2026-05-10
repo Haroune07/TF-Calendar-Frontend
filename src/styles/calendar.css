@@ -165,7 +165,34 @@
   overflow: hidden;
 }
 
-/* LEGEND */
+.event-pill.en-conflit {
+  border: 1.5px solid #ef4444;
+  animation: pulsationConflit 2s infinite;
+}
+
+@keyframes pulsationConflit {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.conflict-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ef4444;
+  color: white;
+  font-size: 10px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid white;
+  z-index: 10;
+}
+
 .calendar-legend {
   display: flex;
   gap: 1.5rem;
