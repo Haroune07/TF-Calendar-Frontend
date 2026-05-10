@@ -3,8 +3,10 @@ import { useRouteLoaderData } from "react-router-dom";
 import type { UserDTO } from "../services/api";
 import { useEffect, useState } from "react";
 import { api } from "../services/api";
+import { useTheme } from "../services/ThemeContext";
 
 export default function Navbar(){
+    const { theme, toggleTheme } = useTheme();
     const user = useRouteLoaderData("root") as UserDTO;
     const [friends, setFriends] = useState<UserDTO[]>([])
     const [showFriends, setShowFriends] = useState(false);
@@ -21,6 +23,13 @@ export default function Navbar(){
             </div>
 
             <div className={styles.rightSection}>
+                <button 
+                  className={styles.themeToggle} 
+                  onClick={toggleTheme}
+                  title={`Passer en mode ${theme === 'light' ? 'sombre' : 'clair'}`}
+                >
+                  {theme === 'light' ? '🌙' : '☀️'}
+                </button>
 
                 <div className={styles.friendsContainer}>
                     <button className={styles.friendsBtn} onClick={() => setShowFriends(!showFriends)}>F</button>

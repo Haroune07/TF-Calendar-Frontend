@@ -70,10 +70,8 @@
 .mainContent {
   flex: 1;
   padding: 2rem;
-
   overflow-y: auto;
-
-  background-color: #f5f7fb;
+  background-color: var(--color-bg-main);
 }
 
 .content {
