@@ -1,18 +1,66 @@
 import  styles from "./Navbar.module.css"
-import { useRouteLoaderData } from "react-router-dom";
+import { useNavigate, useRouteLoaderData } from "react-router-dom";
 import type { UserDTO } from "../services/api";
 import { useEffect, useState } from "react";
-import { api } from "../services/api";
+import { api, omnivoxApi } from "../services/api";
 import { useTheme } from "../services/ThemeContext";
 
-export default function Navbar(){
+type ImportState = "idle" | "loading" | "success" | "error";
+
+
+export default function Navbar({ onOmnivoxImported }: { onOmnivoxImported?: (activites: any[]) => void }){
     const { theme, toggleTheme } = useTheme();
     const user = useRouteLoaderData("root") as UserDTO;
     const [friends, setFriends] = useState<UserDTO[]>([])
     const [showFriends, setShowFriends] = useState(false);
+    const navigate = useNavigate();
+    const [importState, setImportState] = useState<ImportState>("idle");
+    const [importMessage, setImportMessage] = useState<string | null>(null);
+
     useEffect(() => {
         api.getFriends().then(data =>  {console.log(data);  setFriends(data)});
     }, []);
+
+
+    const handleOmnivoxImport = async () => {
+        // no da redirects to profilee
+        if (!user?.omnivoxDA) {
+            navigate("/profile", { state: { omnivoxNotice: true } });
+            return;
+        }
+ 
+        setImportState("loading");
+        setImportMessage(null);
+ 
+        try {
+            const result = await omnivoxApi.importCours();
+            const count = result.activites?.length ?? 0;
+            const errors = result.erreurs?.length ?? 0;
+
+            console.log("import result:", result);
+ 
+            setImportState("success");
+            setImportMessage(
+                errors > 0
+                    ? `${count} cours importés, ${errors} ignorés`
+                    : `${count} cours importés avec succès`
+            );
+ 
+            if (onOmnivoxImported && result.activites?.length > 0) {
+                onOmnivoxImported(result.activites);
+            }
+        } catch {
+            setImportState("error");
+            setImportMessage("Erreur lors de l'importation");
+        } finally {
+            setTimeout(() => {
+                setImportState("idle");
+                setImportMessage(null);
+            }, 4000);
+        }
+    };
+
+
     return(
         <header className={styles.navbar}>
             <div>
@@ -21,6 +69,23 @@ export default function Navbar(){
                         Voici votre Calendrier
                     </p>
             </div>
+
+            <div className={styles.omnivoxWrapper}>
+                    <button
+                        className={`${styles.omnivoxBtn} ${importState === "loading" ? styles.loading : ""} ${importState === "success" ? styles.success : ""} ${importState === "error" ? styles.error : ""}`}
+                        onClick={handleOmnivoxImport}
+                        disabled={importState === "loading"}
+                        title={user?.omnivoxDA ? "Importer mes cours Omnivox" : "Configurer Omnivox"}
+                    >
+                        {importState === "loading" ? "⏳" : importState === "success" ? "✓" : importState === "error" ? "✕" : "📚"}
+                    </button>
+                    {importMessage && (
+                        <div className={`${styles.importToast} ${importState === "error" ? styles.toastError : styles.toastSuccess}`}>
+                            {importMessage}
+                        </div>
+                    )}
+                </div>
+ 
 
             <div className={styles.rightSection}>
                 <button 
@@ -58,7 +123,7 @@ export default function Navbar(){
                 </div>
                    
 
-                <div className={styles.userBox}>
+                <div className={styles.userBox}  onClick={() => navigate("/profile")} style={{ cursor: "pointer" }}>
                     <div className={styles.avatar}>
                         {user?.nomComplet?.charAt(0) || user?.email?.charAt(0)}
                     </div>
