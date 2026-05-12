@@ -166,9 +166,11 @@ export const api = {
     return fetchAPI("/invitation/sent");
   },
   
-  async acceptInvitation(id: number) {
+  async acceptInvitation(id: number, force = false) {
     return fetchAPI(`/invitation/${id}/accept`, {
       method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ force }),
     });
   },
   

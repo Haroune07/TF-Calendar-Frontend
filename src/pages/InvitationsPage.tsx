@@ -20,18 +20,32 @@ export async function invitationAction({ request }: any) {
   try {
     if (actionType === "accept") {
       await api.acceptInvitation(id);
-      return {success: "Invitation acceptée"};
+      return { success: "Invitation acceptée" };
     }
-
+  
     if (actionType === "refuse") {
       await api.refuseInvitation(id);
-      return {success: "Invitation refusée"};
+      return { success: "Invitation refusée" };
     }
-
-    return null;
+  
   } catch (error: any) {
-    return { error: error.message };
-  }
+  
+    
+    if (error.isConflict) {
+      const confirm = window.confirm(
+        error.conflictMessage + "\nVoulez-vous accepter quand même ?"
+      );
+  
+      if (confirm) {
+        await api.acceptInvitation(id, true); 
+        return { success: "Invitation acceptée malgré le conflit" };
+      }
+  
+      return { error: "Invitation non acceptée" };
+    }
+  
+    return { error: error.message }
+}
 }
 
 export default function InvitationsPage() {
@@ -107,3 +121,4 @@ export default function InvitationsPage() {
   </div>
   );
 }
+
