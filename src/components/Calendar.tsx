@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import "../styles/calendar.css";
-import { api, programmableApi, type ActiviteDTO, type EvenementDTO, type ProgrammableDTO, type UserDTO, type ConflitInfoDTO } from "../services/api";
+import { api, programmableApi, type ActiviteDTO, type EvenementDTO, type ProgrammableDTO, type UserDTO, type ConflitInfoDTO, CATEGORIES, type CategorieProgrammable } from "../services/api";
 import { useRouteLoaderData } from "react-router-dom";
 import CreateProgrammable from "./CreateProgrammable";
 import DetailProgrammableModal from "./DetailProgrammableModal";
@@ -12,6 +12,15 @@ const PRIORITYTOCOLOR: Record<string, string> = {
   IMPORTANCE_BASSE: "#10b981",
 };
 
+ 
+const CATEGORIETOCOLOR: Record<string, string> = {
+  COURS:     "#2563eb",
+  TRAVAIL:   "#d97706",
+  PERSONNEL: "#7c3aed",
+  SPORT:     "#10b981",
+  AUTRE:     "#64748b",
+};
+
 function EventPill({ programmable, estVueSemaine, onClick, estEnConflit }: { 
   programmable: ProgrammableDTO, 
   estVueSemaine?: boolean,
@@ -19,9 +28,11 @@ function EventPill({ programmable, estVueSemaine, onClick, estEnConflit }: {
   estEnConflit?: boolean
 }) {
   const color =
-    programmable.type === "activite"
-      ? PRIORITYTOCOLOR[programmable.priorite ?? "IMPORTANCE_MOYENNE"]
-      : `hsl(${(programmable.nom.length * 40) % 360}, 60%, 50%)`; // Couleur unique basée sur le nom
+    programmable.categorie
+      ? CATEGORIETOCOLOR[programmable.categorie]
+      : programmable.type === "activite"
+        ? PRIORITYTOCOLOR[programmable.priorite ?? "IMPORTANCE_MOYENNE"]
+        : `hsl(${(programmable.nom.length * 40) % 360}, 60%, 50%)`;
  
   return (
     <div
@@ -53,6 +64,9 @@ export default function Calendar({ view, replanifierId }: { view: "month" | "wee
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   const [selectedItem, setSelectedItem] = useState<ProgrammableDTO | null>(null);
   const user = useRouteLoaderData("root") as UserDTO;
+  const [activeCategories, setActiveCategories] = useState<Set<CategorieProgrammable>>(
+    new Set(CATEGORIES.map(c => c.value))
+  );
 
 
   const today = new Date();
@@ -203,8 +217,24 @@ export default function Calendar({ view, replanifierId }: { view: "month" | "wee
     return new Date(year, month - 1, day);
   }
 
+   
+  const toggleCategorie = (cat: CategorieProgrammable) => {
+    setActiveCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(cat)) {
+        next.delete(cat);
+      } else {
+        next.add(cat);
+      }
+      return next;
+    });
+  };
+
   function getProgrammablesParDate(d: Date): ProgrammableDTO[] {
-    const tous = [...activites, ...evenements];
+    const tous = [...activites, ...evenements].filter(p =>
+      activeCategories.has((p.categorie ?? 'AUTRE') as CategorieProgrammable)
+    );
+
     const jourCible = new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
     return tous.filter((p) => {
@@ -505,23 +535,20 @@ export default function Calendar({ view, replanifierId }: { view: "month" | "wee
 
 
 
+
+ 
         <div className="calendar-legend">
-          <span className="legend-item">
-            <span className="legend-dot" style={{ backgroundColor: "#ef4444" }} />
-            Urgent
-          </span>
-          <span className="legend-item">
-            <span className="legend-dot" style={{ backgroundColor: "#2563eb" }} />
-            Activité
-          </span>
-          <span className="legend-item">
-            <span className="legend-dot" style={{ backgroundColor: "#10b981" }} />
-            Basse priorité
-          </span>
-          <span className="legend-item">
-            <span className="legend-dot" style={{ backgroundColor: "#8b5cf6" }} />
-            Événement
-          </span>
+          {CATEGORIES.map(cat => (
+            <button
+              key={cat.value}
+              className={`filter-btn ${activeCategories.has(cat.value) ? "active" : "inactive"}`}
+              style={{ "--cat-color": cat.color } as React.CSSProperties}
+              onClick={() => toggleCategorie(cat.value)}
+            >
+              <span className="legend-dot" style={{ backgroundColor: activeCategories.has(cat.value) ? cat.color : "#cbd5e1" }} />
+              {cat.label}
+            </button>
+          ))}
         </div>
       </div>
     

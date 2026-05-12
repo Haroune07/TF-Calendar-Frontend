@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { programmableApi, type CreateActivitePayload, type ProgrammableDTO } from "../services/api";
+import { programmableApi, type CategorieProgrammable, type CreateActivitePayload, type ProgrammableDTO } from "../services/api";
 import styles from "../styles/Createprogrammablemodal.module.css";
 
 
@@ -22,6 +22,7 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
     const [dureeHeures, setDureeHeures] = useState(1);
     const [dureeJours, setDureeJours] = useState(1);
     const [priorite, setPriorite] = useState<CreateActivitePayload["priorite"]>("IMPORTANCE_MOYENNE");
+    const [categorie, setCategorie] = useState<CategorieProgrammable>("AUTRE");
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
@@ -43,6 +44,7 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
                     dateDepart,
                     dureeHeures,
                     priorite,
+                    categorie,
                     forceCreate,
                 });
                 created.type = "activite";
@@ -52,6 +54,7 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
                     description: description || undefined,
                     dateDepart,
                     dureeJours,
+                    categorie,
                 });
                 created.type = "evenement";
             }
@@ -173,8 +176,25 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
                         <option value="URGENT">Urgent</option>
                         </select>
                     </div>
+
+
+                     <div className={styles.field}>
+                        <label htmlFor="categorie">Catégorie</label>
+                        <select
+                            id="categorie"
+                            value={categorie}
+                            onChange={e => setCategorie(e.target.value as CategorieProgrammable)}
+                        >
+                            <option value="COURS">Cours</option>
+                            <option value="TRAVAIL">Travail</option>
+                            <option value="PERSONNEL">Personnel</option>
+                            <option value="SPORT">Sport</option>
+                            <option value="AUTRE">Autre</option>
+                        </select>
+                    </div>
                     </>
                 ) : (
+                    <>
                     <div className={styles.field}>
                     <label htmlFor="dureeJours">Durée (jours) *</label>
                     <input
@@ -187,6 +207,22 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
                         required
                     />
                     </div>
+ 
+                    <div className={styles.field}>
+                        <label htmlFor="categorie">Catégorie</label>
+                        <select
+                            id="categorie"
+                            value={categorie}
+                            onChange={e => setCategorie(e.target.value as CategorieProgrammable)}
+                        >
+                            <option value="COURS">Cours</option>
+                            <option value="TRAVAIL">Travail</option>
+                            <option value="PERSONNEL">Personnel</option>
+                            <option value="SPORT">Sport</option>
+                            <option value="AUTRE">Autre</option>
+                        </select>
+                    </div>
+                    </>
                 )}
 
                 {/* Conflict warning — shown instead of a generic error */}

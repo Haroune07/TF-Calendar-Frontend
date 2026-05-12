@@ -48,6 +48,7 @@ export type ActiviteDTO = {
   type: "activite";
   dureeHeures: number;       
   priorite: "URGENT" | "IMPORTANCE_MOYENNE" | "IMPORTANCE_BASSE";
+  categorie?: CategorieProgrammable;
 };
 
 export type EvenementDTO = {
@@ -59,6 +60,7 @@ export type EvenementDTO = {
   calendrierId?: number | null;
   type: "evenement";
   dureeJours: number;     
+  categorie?: CategorieProgrammable;
 };
 
 export type ProgrammableDTO = ActiviteDTO | EvenementDTO;
@@ -175,6 +177,7 @@ export type CreateActivitePayload = {
   dateDepart: string;
   dureeHeures: number;
   priorite: "URGENT" | "IMPORTANCE_MOYENNE" | "IMPORTANCE_BASSE";
+  categorie?: CategorieProgrammable;
   forceCreate?: boolean;
 };
  
@@ -183,6 +186,7 @@ export type CreateEvenementPayload = {
   description?: string;
   dateDepart: string;
   dureeJours: number;
+  categorie?: CategorieProgrammable;
 };
 
 export type ConflitInfoDTO = {
@@ -269,4 +273,24 @@ export const programmableApi = {
     });
   }
 };
+
+
+ 
+export const omnivoxApi = {
+  async importCours(): Promise<{ activites: any[]; erreurs: any[] }> {
+    return fetchAPI("/omnivox/import", { method: "POST" });
+  },
+};
+
+
+ 
+export type CategorieProgrammable = 'COURS' | 'TRAVAIL' | 'PERSONNEL' | 'SPORT' | 'AUTRE';
+ 
+export const CATEGORIES: { value: CategorieProgrammable; label: string; color: string }[] = [
+  { value: 'COURS',     label: 'Cours',     color: '#2563eb' },
+  { value: 'TRAVAIL',   label: 'Travail',   color: '#d97706' },
+  { value: 'PERSONNEL', label: 'Personnel', color: '#7c3aed' },
+  { value: 'SPORT',     label: 'Sport',     color: '#10b981' },
+  { value: 'AUTRE',     label: 'Autre',     color: '#64748b' },
+];
 
