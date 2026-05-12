@@ -47,20 +47,28 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
 
             if (type === "activite") {
 
-                const activite = await programmableApi.createActivite({
-                    nom,
-                    description: description || undefined,
-                    dateDepart,
-                    dureeHeures,
-                    priorite,
-                    forceCreate,
-                });
-
-                for(const friendId of selectedFriends){
-                    await api.createActivityInvitation(user.id, friendId, activite.id)
+                if(selectedFriends.length > 0){
+                    
+                    created = await programmableApi.createActiviteGroupe({
+                        nom,
+                        description: description || undefined,
+                        dateDepart,
+                        dureeHeures,
+                        priorite,
+                        participantIds: selectedFriends,
+                        forceCreate,
+                    });
+                }else{
+                    created = await programmableApi.createActivite({
+                        nom,
+                        description: description || undefined,
+                        dateDepart,
+                        dureeHeures,
+                        priorite,
+                        forceCreate,
+                    });
                 }
-                created = activite;
-            } else {
+            }else {
                 created = await programmableApi.createEvenement({
                     nom,
                     description: description || undefined,
@@ -169,7 +177,7 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
                             min={0.5}
                             step={0.5}
                             value={dureeHeures}
-                            onChange={e => setDureeHeures(parseFloat(e.target.value))}
+                            onChange={e => setDureeHeures(Number(e.target.value)|| 1)}
                             required
                         />
                     </div>
@@ -196,7 +204,7 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
                         min={1}
                         step={1}
                         value={dureeJours}
-                        onChange={e => setDureeJours(parseInt(e.target.value))}
+                        onChange={e => setDureeJours(Number(e.target.value)|| 1)}
                         required
                     />
                     </div>

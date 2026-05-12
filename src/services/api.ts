@@ -50,6 +50,20 @@ export type ActiviteDTO = {
   priorite: "URGENT" | "IMPORTANCE_MOYENNE" | "IMPORTANCE_BASSE";
 };
 
+export type ActiviteGroupeDTO = {
+  id: number;
+  nom: string;
+  description?: string;
+  dateDepart: string;
+  userId: number;
+  calendrierId?: number | null;
+  type: "activite_groupe";
+  dureeHeures: number;       
+  priorite: "URGENT" | "IMPORTANCE_MOYENNE" | "IMPORTANCE_BASSE";
+
+  participants?: UserDTO[];
+};
+
 export type EvenementDTO = {
   id: number;
   nom: string;
@@ -61,7 +75,7 @@ export type EvenementDTO = {
   dureeJours: number;     
 };
 
-export type ProgrammableDTO = ActiviteDTO | EvenementDTO;
+export type ProgrammableDTO = ActiviteDTO|ActiviteGroupeDTO | EvenementDTO;
 
 
 
@@ -201,6 +215,16 @@ export const api = {
 
 };
 
+export type CreateActiviteGroupePayload = {
+  nom: string;
+  description?: string;
+  dateDepart: string;
+  dureeHeures: number;
+  priorite: "URGENT" | "IMPORTANCE_MOYENNE" | "IMPORTANCE_BASSE";
+  participantIds: number[];
+  forceCreate?: boolean;
+}
+
 
 export type CreateActivitePayload = {
   nom: string;
@@ -245,6 +269,16 @@ export type ReplanifierReponseDTO = {
 export const programmableApi = {
   async createActivite(data: CreateActivitePayload): Promise<ActiviteDTO> {
     return fetchAPI("/programmable/activite", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  },
+
+  async createActiviteGroupe(
+    data: CreateActiviteGroupePayload
+  ): Promise<ProgrammableDTO>{
+    return fetchAPI("/programmable/activite-groupe", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),

@@ -132,7 +132,7 @@ export default function Calendar({ view, replanifierId }: { view: "month" | "wee
   const chargerDonnees = () => {
     if (!user?.id) return;
     api.getProgrammableByUser(user.id).then(programmable => {
-      setActivites(programmable.filter(p => p.type == "activite") as ActiviteDTO[]);
+      setActivites(programmable.filter(p => p.type == "activite" || p.type === "activite_groupe") as ActiviteDTO[]);
       setEvenements(programmable.filter(p => p.type == "evenement") as EvenementDTO[]);
     });
     // On charge aussi les conflits pour afficher les badges
@@ -157,7 +157,7 @@ export default function Calendar({ view, replanifierId }: { view: "month" | "wee
 
 
   const handleCreated = (item: ProgrammableDTO) => {
-    if (item.type === "activite"){
+    if (item.type === "activite" || item.type === "activite_groupe"){
       setActivites(prev => [...prev, item as ActiviteDTO])
     }
     else {
@@ -173,7 +173,7 @@ export default function Calendar({ view, replanifierId }: { view: "month" | "wee
   };
 
   const handleUpdated = (item: ProgrammableDTO) => {
-    if (item.type === "activite") {
+    if (item.type === "activite" || item.type === "activite_groupe") {
       setActivites(prev => prev.map(a => a.id === item.id ? (item as ActiviteDTO) : a));
     } else {
       setEvenements(prev => prev.map(e => e.id === item.id ? (item as EvenementDTO) : e));
@@ -302,7 +302,7 @@ export default function Calendar({ view, replanifierId }: { view: "month" | "wee
    * afin que celles qui se chevauchent s'affichent côte-à-côte
    */
   function getLayoutForDay(dayDate: Date) {
-    const acts = getProgrammablesParDate(dayDate).filter(p => p.type === "activite") as ActiviteDTO[];
+    const acts = getProgrammablesParDate(dayDate).filter(p => p.type === "activite" || p.type === "activite_groupe") as ActiviteDTO[];
     
     const events = acts.map(p => {
       const start = new Date(p.dateDepart);
