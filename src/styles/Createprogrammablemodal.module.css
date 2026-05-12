@@ -265,4 +265,51 @@
 .conflitConfirmBtn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
+}
+
+
+.inviteSection {
+  margin-top: 1rem;
+}
+
+.inviteTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+
+  color: #111827;
+
+  margin-bottom: 0.8rem;
+}
+
+.friendInviteItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0.7rem 0;
+
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.friendInviteLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.friendInviteAvatar {
+  width: 34px;
+  height: 34px;
+
+  border-radius: 50%;
+
+  background: #2563eb;
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 0.9rem;
+  font-weight: 700;
+}

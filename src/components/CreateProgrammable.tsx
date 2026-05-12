@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { programmableApi, type CategorieProgrammable, type CreateActivitePayload, type ProgrammableDTO } from "../services/api";
-import styles from "../styles/Createprogrammablemodal.module.css";
-
+import { programmableApi, type CategorieProgrammable, type CreateActivitePayload, type CreateEvenementPayload, type ProgrammableDTO } from "../services/api";
+import styles from "../styles/CreateProgrammableModal.module.css";
+import { useRouteLoaderData } from "react-router-dom";
+import {api, type UserDTO} from "../services/api";
+import { useEffect } from "react";
 
 type Props = {
   defaultDate?: string; // pre-fill date when clicking a day
@@ -25,6 +27,13 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
     const [categorie, setCategorie] = useState<CategorieProgrammable>("AUTRE");
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const user = useRouteLoaderData("root") as UserDTO;
+    const [friends, setFriends] = useState<UserDTO[]>([]);
+    const [selectedFriends, setSelectedFriends] = useState<number[]>([]);
+
+    useEffect(() => {
+        api.getFriends().then(setFriends);
+    }, []);
 
     // Conflict state: when the API returns a 409, we store the conflict message
     // and wait for the user to confirm they want to force-create
@@ -49,6 +58,29 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
                 });
                 created.type = "activite";
             } else {
+
+                if(selectedFriends.length > 0){
+                    
+                    created = await programmableApi.createActiviteGroupe({
+                        nom,
+                        description: description || undefined,
+                        dateDepart,
+                        dureeHeures,
+                        priorite,
+                        participantIds: selectedFriends,
+                        forceCreate,
+                    });
+                }else{
+                    created = await programmableApi.createActivite({
+                        nom,
+                        description: description || undefined,
+                        dateDepart,
+                        dureeHeures,
+                        priorite,
+                        forceCreate,
+                    });
+                }
+            }else {
                 created = await programmableApi.createEvenement({
                     nom,
                     description: description || undefined,
@@ -56,7 +88,6 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
                     dureeJours,
                     categorie,
                 });
-                created.type = "evenement";
             }
 
             onCreated(created);
@@ -159,7 +190,7 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
                             min={0.5}
                             step={0.5}
                             value={dureeHeures}
-                            onChange={e => setDureeHeures(parseFloat(e.target.value))}
+                            onChange={e => setDureeHeures(Number(e.target.value)|| 1)}
                             required
                         />
                     </div>
@@ -203,7 +234,7 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
                         min={1}
                         step={1}
                         value={dureeJours}
-                        onChange={e => setDureeJours(parseInt(e.target.value))}
+                        onChange={e => setDureeJours(Number(e.target.value)|| 1)}
                         required
                     />
                     </div>
@@ -224,6 +255,37 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
                     </div>
                     </>
                 )}
+                <div className={styles.inviteSection}>
+                    <h3 className={styles.inviteTitle}>Inviter des amis</h3>
+
+                    {friends.map(friend => (
+
+                        <div  key={friend.id} className={styles.friendInviteItem}>
+
+                            <div className={styles.friendInviteLeft}>
+
+                                <div className={styles.friendInviteAvatar}>
+                                        {friend.nomComplet?.charAt(0)}
+                                </div>
+
+                                <span>
+                                    {friend.nomComplet}
+                                </span>
+
+                            </div>
+                                <input type="checkbox"
+                                    checked={selectedFriends.includes(friend.id)}
+                                    onChange={(e) => {
+                                        if (e.target.checked){
+                                            setSelectedFriends([...selectedFriends, friend.id]);
+                                        }else{
+                                            setSelectedFriends( selectedFriends.filter(id => id !== friend.id));
+                                        }
+                                    }} 
+                                />
+                        </div>
+                    ))}
+                </div>
 
                 {/* Conflict warning — shown instead of a generic error */}
                 {conflitMessage && (

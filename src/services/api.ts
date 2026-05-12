@@ -51,6 +51,20 @@ export type ActiviteDTO = {
   categorie?: CategorieProgrammable;
 };
 
+export type ActiviteGroupeDTO = {
+  id: number;
+  nom: string;
+  description?: string;
+  dateDepart: string;
+  userId: number;
+  calendrierId?: number | null;
+  type: "activite_groupe";
+  dureeHeures: number;       
+  priorite: "URGENT" | "IMPORTANCE_MOYENNE" | "IMPORTANCE_BASSE";
+
+  participants?: UserDTO[];
+};
+
 export type EvenementDTO = {
   id: number;
   nom: string;
@@ -63,7 +77,7 @@ export type EvenementDTO = {
   categorie?: CategorieProgrammable;
 };
 
-export type ProgrammableDTO = ActiviteDTO | EvenementDTO;
+export type ProgrammableDTO = ActiviteDTO|ActiviteGroupeDTO | EvenementDTO;
 
 
 
@@ -168,7 +182,50 @@ export const api = {
     return fetchAPI("/users/friends")
   },
 
+  async createFriendInvitation(senderId : number,invitedUserId: number){
+    return fetchAPI("/invitation",{
+      method: "POST",
+      headers: {
+        "Content-type": "application/json",
+      },
+      body: JSON.stringify({
+        type: "AMI",
+        senderId,
+        invitedUserId,
+        amiId: invitedUserId,
+      }),
+    })
+  },
+  
+  async createActivityInvitation(
+    senderId: number,
+    invitedUserId: number,
+    activiteGroupeId: number
+  ){
+    return fetchAPI("/invitation",{
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ type: "ACTIVITE", senderId, invitedUserId, activiteGroupeId}),
+    });
+  },
+
+  async searchUsers(query: string): Promise<UserDTO[]>{
+    return fetchAPI(`/users/search?query=${query}`);
+  },
+
 };
+
+export type CreateActiviteGroupePayload = {
+  nom: string;
+  description?: string;
+  dateDepart: string;
+  dureeHeures: number;
+  priorite: "URGENT" | "IMPORTANCE_MOYENNE" | "IMPORTANCE_BASSE";
+  participantIds: number[];
+  forceCreate?: boolean;
+}
 
 
 export type CreateActivitePayload = {
@@ -216,6 +273,16 @@ export type ReplanifierReponseDTO = {
 export const programmableApi = {
   async createActivite(data: CreateActivitePayload): Promise<ActiviteDTO> {
     return fetchAPI("/programmable/activite", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  },
+
+  async createActiviteGroupe(
+    data: CreateActiviteGroupePayload
+  ): Promise<ProgrammableDTO>{
+    return fetchAPI("/programmable/activite-groupe", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),

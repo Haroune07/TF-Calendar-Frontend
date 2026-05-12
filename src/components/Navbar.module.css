@@ -212,4 +212,66 @@
   padding: 0.8rem 0;
   border-bottom: 1px solid var(--color-border);
   color: var(--color-text-main);
-}
+}
+
+ 
+
+.addFriendSection {
+  margin-bottom: 1rem;
+}
+
+.friendInput {
+  width: 100%;
+
+  padding: 0.8rem 1rem;
+
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+
+  outline: none;
+
+  font-size: 0.95rem;
+
+  transition: 0.2s ease;
+}
+
+.friendInput:focus {
+  border-color: #2563eb;
+}
+
+.addFriendBtn {
+  border: none;
+
+  background: #2563eb;
+  color: white;
+
+  padding: 0.5rem 1rem;
+
+  border-radius: 10px;
+
+  cursor: pointer;
+
+  font-weight: 500;
+
+  transition: 0.2s ease;
+}
+
+.addFriendBtn:hover {
+  background: #1d4ed8;
+}
+
+.searchResult {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0.7rem 0;
+
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.friendLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
