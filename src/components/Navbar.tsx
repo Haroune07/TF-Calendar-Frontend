@@ -8,6 +8,8 @@ export default function Navbar(){
     const user = useRouteLoaderData("root") as UserDTO;
     const [friends, setFriends] = useState<UserDTO[]>([])
     const [showFriends, setShowFriends] = useState(false);
+    const [search, setSearch] = useState("");
+    const [results, setResults] = useState<UserDTO[]>([]);
     useEffect(() => {
         api.getFriends().then(data =>  {console.log(data);  setFriends(data)});
     }, []);
@@ -29,6 +31,58 @@ export default function Navbar(){
                             <h3 className={styles.dropdownTitle}>
                                 Mes amis
                             </h3>
+                            <div className={styles.addFriendSection}>
+                                <input type="text"
+                                    placeholder="Rechercher un ami"
+                                    value={search}
+                                    onChange={ async (e) => {
+                                         const value = e.target.value;
+                                         setSearch(value);
+                                         if (value.length < 2){
+                                            setResults([]);
+                                            return;
+                                         }
+
+                                         const users = await api.searchUsers(value);
+                                         console.log(users);
+                                         setResults(users);
+
+                                    }
+                                }className={styles.friendInput} 
+                                />
+                            </div>
+
+                            {results.map(result => (
+
+                                <div key={result.id} className={styles.searchResult}>
+
+                                    <div className={styles.friendLeft}>
+
+                                        <div className={styles.friendAvatar}>
+                                            {result.nomComplet?.charAt(0)}
+                                        </div>
+
+                                        <span>
+                                            {result.nomComplet}
+                                        </span>
+
+                                    </div>
+                                    <button className={styles.addFriendBtn} onClick={
+                                        async () =>{
+                                            await api.createFriendInvitation(user.id , result.id);
+                                            alert("invitation envoyée");
+
+                                            setSearch("");
+                                            setResults([]);
+
+                                        }
+                                    }
+                                    >
+                                         Ajouter
+                                    </button>
+
+                                </div>
+                            ))}
 
                             {friends.length === 0 ?(
                                     <p className={styles.emptyText}>Aucun ami</p>

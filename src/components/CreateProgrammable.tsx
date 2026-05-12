@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { programmableApi, type CreateActivitePayload, type CreateEvenementPayload, type ProgrammableDTO } from "../services/api";
 import styles from "../styles/CreateProgrammableModal.module.css";
-
+import { useRouteLoaderData } from "react-router-dom";
+import {api, type UserDTO} from "../services/api";
+import { useEffect } from "react";
 
 type Props = {
   defaultDate?: string; // pre-fill date when clicking a day
@@ -24,6 +26,13 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
     const [priorite, setPriorite] = useState<CreateActivitePayload["priorite"]>("IMPORTANCE_MOYENNE");
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const user = useRouteLoaderData("root") as UserDTO;
+    const [friends, setFriends] = useState<UserDTO[]>([]);
+    const [selectedFriends, setSelectedFriends] = useState<number[]>([]);
+
+    useEffect(() => {
+        api.getFriends().then(setFriends);
+    }, []);
 
     const handleSubmit = async (event : React.FormEvent) => {
         event.preventDefault();
@@ -36,13 +45,17 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
 
             if (type === "activite"){
 
-                created = await programmableApi.createActivite({
+                const activite = await programmableApi.createActivite({
                     nom,
                     description: description || undefined,
                     dateDepart,
                     dureeHeures,
                     priorite,                    
                 });
+                for(const friendId of selectedFriends){
+                    await api.createActivityInvitation(user.id, friendId, activite.id)
+                }
+                created = activite;
             } else {
                 created = await programmableApi.createEvenement({
                 nom,
@@ -171,6 +184,37 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
                     />
                     </div>
                 )}
+                <div className={styles.inviteSection}>
+                    <h3 className={styles.inviteTitle}>Inviter des amis</h3>
+
+                    {friends.map(friend => (
+
+                        <div  key={friend.id} className={styles.friendInviteItem}>
+
+                            <div className={styles.friendInviteLeft}>
+
+                                <div className={styles.friendInviteAvatar}>
+                                        {friend.nomComplet?.charAt(0)}
+                                </div>
+
+                                <span>
+                                    {friend.nomComplet}
+                                </span>
+
+                            </div>
+                                <input type="checkbox"
+                                    checked={selectedFriends.includes(friend.id)}
+                                    onChange={(e) => {
+                                        if (e.target.checked){
+                                            setSelectedFriends([...selectedFriends, friend.id]);
+                                        }else{
+                                            setSelectedFriends( selectedFriends.filter(id => id !== friend.id));
+                                        }
+                                    }} 
+                                />
+                        </div>
+                    ))}
+                </div>
 
                  
                     {error && <p className={styles.error}>{error}</p>}

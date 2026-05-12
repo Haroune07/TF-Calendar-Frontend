@@ -157,6 +157,39 @@ export const api = {
     return fetchAPI("/users/friends")
   },
 
+  async createFriendInvitation(senderId : number,invitedUserId: number){
+    return fetchAPI("/invitation",{
+      method: "POST",
+      headers: {
+        "Content-type": "application/json",
+      },
+      body: JSON.stringify({
+        type: "AMI",
+        senderId,
+        invitedUserId,
+        amiId: invitedUserId,
+      }),
+    })
+  },
+  
+  async createActivityInvitation(
+    senderId: number,
+    invitedUserId: number,
+    activiteGroupeId: number
+  ){
+    return fetchAPI("/invitation",{
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ type: "ACTIVITE", senderId, invitedUserId, activiteGroupeId}),
+    });
+  },
+
+  async searchUsers(query: string): Promise<UserDTO[]>{
+    return fetchAPI(`/users/search?query=${query}`);
+  },
+
 };
 
 
