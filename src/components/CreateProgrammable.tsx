@@ -47,17 +47,6 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
             let created: ProgrammableDTO;
 
             if (type === "activite") {
-                created = await programmableApi.createActivite({
-                    nom,
-                    description: description || undefined,
-                    dateDepart,
-                    dureeHeures,
-                    priorite,
-                    categorie,
-                    forceCreate,
-                });
-                created.type = "activite";
-            } else {
 
                 if(selectedFriends.length > 0){
                     
@@ -70,17 +59,22 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
                         participantIds: selectedFriends,
                         forceCreate,
                     });
-                }else{
+                    
+                } else {
+            
                     created = await programmableApi.createActivite({
                         nom,
                         description: description || undefined,
                         dateDepart,
                         dureeHeures,
                         priorite,
+                        categorie,
                         forceCreate,
                     });
                 }
-            }else {
+            
+            } else {
+            
                 created = await programmableApi.createEvenement({
                     nom,
                     description: description || undefined,
