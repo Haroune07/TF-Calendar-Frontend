@@ -1,7 +1,4 @@
 import { useState } from "react";
-import { programmableApi, type CreateActivitePayload, type ProgrammableDTO } from "../services/api";
-import styles from "../styles/Createprogrammablemodal.module.css";
-
 import { programmableApi, type CreateActivitePayload, type CreateEvenementPayload, type ProgrammableDTO } from "../services/api";
 import styles from "../styles/CreateProgrammableModal.module.css";
 import { useRouteLoaderData } from "react-router-dom";
@@ -49,10 +46,6 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
             let created: ProgrammableDTO;
 
             if (type === "activite") {
-                created = await programmableApi.createActivite({
-            let created : ProgrammableDTO;
-
-            if (type === "activite"){
 
                 const activite = await programmableApi.createActivite({
                     nom,
@@ -62,7 +55,7 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
                     priorite,
                     forceCreate,
                 });
-                created.type = "activite";
+
                 for(const friendId of selectedFriends){
                     await api.createActivityInvitation(user.id, friendId, activite.id)
                 }
@@ -74,7 +67,6 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
                     dateDepart,
                     dureeJours,
                 });
-                created.type = "evenement";
             }
 
             onCreated(created);
