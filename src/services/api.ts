@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3000";
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 export type UserDTO = {
   id: number;
@@ -67,15 +67,24 @@ export type ProgrammableDTO = ActiviteDTO | EvenementDTO;
 
 export type AuthCredentials = { email: string; password?: string; nomComplet?: string };
 
-async function parseError(response: Response): Promise<Error> {
+async function parseError(response: Response): Promise<Error & { isConflict?: boolean; conflictMessage?: string }> {
   let msg = "Erreur de connexion à l'API";
+  let isConflict = false;
+  let conflictMessage: string | undefined;
   try {
     const errorData = await response.json();
     msg = errorData.message || msg;
+    if (response.status === 409) {
+      isConflict = true;
+      conflictMessage = errorData.message;
+    }
   } catch {
     // Ignorer si la réponse n'est pas du JSON valide
   }
-  return new Error(msg);
+  const err = new Error(msg) as Error & { isConflict?: boolean; conflictMessage?: string };
+  err.isConflict = isConflict;
+  err.conflictMessage = conflictMessage;
+  return err;
 }
 
 async function handleResponse(response: Response) {
@@ -91,7 +100,7 @@ async function handleResponse(response: Response) {
 }
 
 async function fetchAPI(endpoint: string, options: RequestInit = {}) {
-  const url = `${API_URL}${endpoint}`;
+  const url = `${API_URL}/api${endpoint}`;
   const response = await fetch(url, { ...options, credentials: "include" });
   return handleResponse(response);
 }
@@ -199,6 +208,7 @@ export type CreateActivitePayload = {
   dateDepart: string;
   dureeHeures: number;
   priorite: "URGENT" | "IMPORTANCE_MOYENNE" | "IMPORTANCE_BASSE";
+  forceCreate?: boolean;
 };
  
 export type CreateEvenementPayload = {
@@ -206,6 +216,30 @@ export type CreateEvenementPayload = {
   description?: string;
   dateDepart: string;
   dureeJours: number;
+};
+
+export type ConflitInfoDTO = {
+  activiteIdA: number;
+  nomA: string;
+  debutA: string;
+  finA: string;
+  activiteIdB: number;
+  nomB: string;
+  debutB: string;
+  finB: string;
+  chevauchementMinutes: number;
+};
+
+export type CreneauDisponibleDTO = {
+  debut: string;
+  fin: string;
+  dureeHeures: number;
+};
+
+export type ReplanifierReponseDTO = {
+  activite: ActiviteDTO;
+  conflitDetecte: boolean;
+  suggestions: CreneauDisponibleDTO[];
 };
 
 export const programmableApi = {
@@ -224,4 +258,48 @@ export const programmableApi = {
       body: JSON.stringify(data),
     });
   },
+
+  async getConflits(): Promise<ConflitInfoDTO[]> {
+    return fetchAPI("/programmable/conflits");
+  },
+
+  async getCreneauxDisponibles(dateDebut: string, dateFin: string, dureeHeures: number): Promise<CreneauDisponibleDTO[]> {
+    const params = new URLSearchParams({
+      dateDebut,
+      dateFin,
+      dureeHeures: dureeHeures.toString(),
+    });
+    return fetchAPI(`/programmable/creneaux-disponibles?${params.toString()}`);
+  },
+
+  async replanifierActivite(id: number, nouvelleDate: string): Promise<ReplanifierReponseDTO> {
+    return fetchAPI(`/programmable/activite/${id}/replanifier`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nouvelleDateDepart: nouvelleDate }),
+    });
+  },
+
+  async deleteProgrammable(id: number): Promise<void> {
+    return fetchAPI(`/programmable/${id}`, {
+      method: "DELETE",
+    });
+  },
+
+  async updateEvenement(id: number, data: Partial<CreateEvenementPayload>): Promise<EvenementDTO> {
+    return fetchAPI(`/programmable/evenement/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateActivite(id: number, data: Partial<CreateActivitePayload>): Promise<ActiviteDTO> {
+    return fetchAPI(`/programmable/activite/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  }
 };
+

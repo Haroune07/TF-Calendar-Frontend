@@ -3,6 +3,7 @@
   flex-direction: column;
   gap: 1.5rem;
   height: 100%;
+  min-height: 0;
 }
 
 .header {
@@ -47,6 +48,35 @@
   background-color: var(--color-primary);
   color: white;
 }
+
+.conflitBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fee2e2;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.conflitBtn:hover {
+  background-color: #fee2e2;
+  transform: translateY(-1px);
+}
+
+.conflitCount {
+  background: #ef4444;
+  color: white;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
 
 .calendarWrapper {
   flex: 1;

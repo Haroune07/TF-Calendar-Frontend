@@ -1,31 +1,24 @@
 .navbar {
   height: 90px;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   padding: 0 2rem;
-
-  background-color: #ffffff;
-
-  border-bottom: 1px solid #e5e7eb;
+  background-color: var(--color-bg-sidebar);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .title {
   margin: 0;
-
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 700;
-
-  color: #111827;
+  color: var(--color-text-main);
 }
 
 .subtitle {
   margin-top: 0.3rem;
-
-  color: #6b7280;
-  font-size: 1rem;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
 }
 
 
@@ -151,6 +144,76 @@
 
 .username {
   font-weight: 600;
+  color: var(--color-text-main);
+}
+
+.themeToggle {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-main);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  transition: all 0.2s ease;
+}
+
+.themeToggle:hover {
+  background-color: var(--color-bg-card);
+  border-color: var(--color-primary);
+  transform: scale(1.05);
+}
+
+.friendsBtn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 12px;
+  background-color: var(--color-bg-main);
+  color: var(--color-text-main);
+  cursor: pointer;
+  font-size: 1rem;
+  transition: 0.2s ease;
+  border: 1px solid var(--color-border);
+}
+
+.friendsBtn:hover {
+  background-color: var(--color-bg-card);
+  border-color: var(--color-primary);
+}
+
+.dropdown {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  width: 280px;
+  background: var(--color-bg-card);
+  border-radius: 16px;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
+  z-index: 100;
+}
+
+.dropdownTitle {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.friendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-main);
+}
+
   color: #111827;
 }
 

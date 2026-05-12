@@ -72,7 +72,9 @@ export default function LoginPage() {
           <span>ou</span>
         </div>
 
-        <a href="http://localhost:3000/auth/google" className={styles.googleButton}>
+        <a href="http://localhost:3000/api/auth/google" className={styles.googleButton}>
+
+
           <GoogleIcon />
           <span>Continuer avec Google</span>
         </a>

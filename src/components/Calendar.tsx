@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import "../styles/calendar.css";
-import { api, type ActiviteDTO, type EvenementDTO, type ProgrammableDTO, type UserDTO } from "../services/api";
+import { api, programmableApi, type ActiviteDTO, type EvenementDTO, type ProgrammableDTO, type UserDTO, type ConflitInfoDTO } from "../services/api";
 import { useRouteLoaderData } from "react-router-dom";
 import CreateProgrammable from "./CreateProgrammable";
+import DetailProgrammableModal from "./DetailProgrammableModal";
 
 
 const PRIORITYTOCOLOR: Record<string, string> = {
@@ -11,7 +12,12 @@ const PRIORITYTOCOLOR: Record<string, string> = {
   IMPORTANCE_BASSE: "#10b981",
 };
 
-function EventPill({ programmable, estVueSemaine }: { programmable: ProgrammableDTO, estVueSemaine?: boolean }) {
+function EventPill({ programmable, estVueSemaine, onClick, estEnConflit }: { 
+  programmable: ProgrammableDTO, 
+  estVueSemaine?: boolean,
+  onClick?: (p: ProgrammableDTO) => void,
+  estEnConflit?: boolean
+}) {
   const color =
     programmable.type === "activite"
       ? PRIORITYTOCOLOR[programmable.priorite ?? "IMPORTANCE_MOYENNE"]
@@ -19,24 +25,33 @@ function EventPill({ programmable, estVueSemaine }: { programmable: Programmable
  
   return (
     <div
-      className={`event-pill ${estVueSemaine ? "vue-semaine" : ""}`}
-      style={{ backgroundColor: color, height: estVueSemaine ? "100%" : "auto" }}
+      className={`event-pill ${estVueSemaine ? "vue-semaine" : ""} ${estEnConflit ? "en-conflit" : ""}`}
+      style={{ backgroundColor: color, height: estVueSemaine ? "100%" : "auto", position: "relative" }}
       title={`${programmable.nom}${programmable.description ? ` — ${programmable.description}` : ""}`}
+      onClick={(e) => {
+        if (onClick) {
+          e.stopPropagation(); // Empêche d'ouvrir le modal de création du jour
+          onClick(programmable);
+        }
+      }}
     >
       <span className="event-name">{programmable.nom}</span>
       {estVueSemaine && programmable.description && (
         <p className="event-desc-court">{programmable.description}</p>
       )}
+      {estEnConflit && <span className="conflict-badge" title="Conflit d'horaire">!</span>}
     </div>
   );
 }
 
-export default function Calendar({ view }: { view: "month" | "week" }) {
+export default function Calendar({ view, replanifierId }: { view: "month" | "week", replanifierId?: number | null }) {
   const [date, setDate] = useState(new Date());
   const [activites, setActivites] = useState<ActiviteDTO[]>([]);
   const [evenements, setEvenements] = useState<EvenementDTO[]>([]);
+  const [conflits, setConflits] = useState<ConflitInfoDTO[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
+  const [selectedItem, setSelectedItem] = useState<ProgrammableDTO | null>(null);
   const user = useRouteLoaderData("root") as UserDTO;
 
 
@@ -114,13 +129,29 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
     return d.toDateString() === today.toDateString();
   };
 
-  useEffect(() => {
+  const chargerDonnees = () => {
     if (!user?.id) return;
     api.getProgrammableByUser(user.id).then(programmable => {
-      setActivites(programmable.filter(p => p.type == "activite"))
-      setEvenements(programmable.filter(p => p.type == "evenement"))
+      setActivites(programmable.filter(p => p.type == "activite") as ActiviteDTO[]);
+      setEvenements(programmable.filter(p => p.type == "evenement") as EvenementDTO[]);
     });
+    // On charge aussi les conflits pour afficher les badges
+    programmableApi.getConflits().then(setConflits);
+  };
+
+  useEffect(() => {
+    chargerDonnees();
   }, [user?.id]);
+
+  // Si on reçoit un ID de replanification depuis l'extérieur (ex: panneau de conflits)
+  useEffect(() => {
+    if (replanifierId) {
+      const item = [...activites, ...evenements].find(i => i.id === replanifierId);
+      if (item) {
+        setSelectedItem(item);
+      }
+    }
+  }, [replanifierId, activites, evenements]);
 
 
 
@@ -132,7 +163,23 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
     else {
       setEvenements(prev => [...prev, item as EvenementDTO])
     }
+    programmableApi.getConflits().then(setConflits);
   }
+
+  const handleDeleted = (id: number) => {
+    setActivites(prev => prev.filter(a => a.id !== id));
+    setEvenements(prev => prev.filter(e => e.id !== id));
+    programmableApi.getConflits().then(setConflits);
+  };
+
+  const handleUpdated = (item: ProgrammableDTO) => {
+    if (item.type === "activite") {
+      setActivites(prev => prev.map(a => a.id === item.id ? (item as ActiviteDTO) : a));
+    } else {
+      setEvenements(prev => prev.map(e => e.id === item.id ? (item as EvenementDTO) : e));
+    }
+    programmableApi.getConflits().then(setConflits);
+  };
 
   const handleDayClicked = (day : number) => {
     const pad = (n: number) => String(n).padStart(2, "0");
@@ -146,23 +193,37 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
    * Récupère les programmables pour une date précise
    * On compare juste l'année, le mois et le jour pour pas avoir de trouble avec les heures
    */
+  /**
+   * Parse la partie date (YYYY-MM-DD) d'une chaîne ISO directement,
+   * sans conversion timezone, pour éviter le décalage UTC→local.
+   */
+  function parseDateSansTimezone(dateStr: string | Date): Date {
+    const str = typeof dateStr === 'string' ? dateStr : dateStr.toISOString();
+    const [year, month, day] = str.split('T')[0].split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+
   function getProgrammablesParDate(d: Date): ProgrammableDTO[] {
     const tous = [...activites, ...evenements];
+    const jourCible = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
     return tous.filter((p) => {
-      const debut = new Date(p.dateDepart);
-      
-      // On crée des dates "pures" (minuit) pour comparer
-      const jourDebut = new Date(debut.getFullYear(), debut.getMonth(), debut.getDate());
-      const jourCible = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      // Utiliser le parsing direct pour éviter le décalage timezone
+      const jourDebut = parseDateSansTimezone(p.dateDepart);
 
       if (p.type === "evenement" && p.dureeJours) {
         const jourFin = new Date(jourDebut);
-        jourFin.setDate(jourFin.getDate() + p.dureeJours - 1);
+        jourFin.setDate(jourFin.getDate() + (p.dureeJours || 1) - 1);
         return jourCible >= jourDebut && jourCible <= jourFin;
       }
-      
+
       return jourCible.getTime() === jourDebut.getTime();
     });
+  }
+
+  // Vérifie si un programmable est en conflit avec un autre
+  function estEnConflit(id: number) {
+    return conflits.some(c => c.activiteIdA === id || c.activiteIdB === id);
   }
 
   /**
@@ -173,12 +234,11 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
     const finSemaine = new Date(joursSemaine[6].getFullYear(), joursSemaine[6].getMonth(), joursSemaine[6].getDate(), 23, 59, 59);
 
     return evenements.filter(e => {
-      const debut = new Date(e.dateDepart);
-      const fin = new Date(debut);
-      fin.setDate(fin.getDate() + (e.dureeJours || 1) - 1);
-      
-      const d = new Date(debut.getFullYear(), debut.getMonth(), debut.getDate());
-      const f = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate(), 23, 59, 59);
+      // Parsing direct pour éviter le décalage timezone
+      const d = parseDateSansTimezone(e.dateDepart);
+      const f = new Date(d);
+      f.setDate(f.getDate() + (e.dureeJours || 1) - 1);
+      f.setHours(23, 59, 59);
 
       return d <= finSemaine && f >= debutSemaine;
     });
@@ -188,13 +248,10 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
    * Calcule où l'événement doit se placer dans la grille (colonne et étalement)
    */
   function calculerPositionEvenement(e: EvenementDTO) {
-    const debutE = new Date(e.dateDepart);
-    const debutSemaine = joursSemaine[0];
-    
-    const d1 = new Date(debutE.getFullYear(), debutE.getMonth(), debutE.getDate());
-    const d2 = new Date(debutSemaine.getFullYear(), debutSemaine.getMonth(), debutSemaine.getDate());
-    
-    // Utilisation de Math.round pour éviter les décalages de quelques ms
+    // Parsing direct pour éviter le décalage timezone
+    const d1 = parseDateSansTimezone(e.dateDepart);
+    const d2 = new Date(joursSemaine[0].getFullYear(), joursSemaine[0].getMonth(), joursSemaine[0].getDate());
+
     let colDepart = Math.round((d1.getTime() - d2.getTime()) / (24 * 3600 * 1000)) + 1;
     let span = e.dureeJours || 1;
 
@@ -207,6 +264,100 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
     }
 
     return { colDepart, span };
+  }
+
+  /**
+   * Assigne une ligne (grid-row) à chaque événement de la barre all-day
+   * pour éviter le chevauchement visuel entre événements qui partagent des colonnes.
+   */
+  function assignerLignesEvenements(evts: EvenementDTO[]): Map<number, number> {
+    const lignes = new Map<number, number>();
+    // On garde trace de l'occupation: { colDepart, colFin, ligne }[]
+    const occupees: Array<{ colDepart: number; colFin: number; ligne: number }> = [];
+
+    for (const e of evts) {
+      const { colDepart, span } = calculerPositionEvenement(e);
+      if (span <= 0) continue;
+      const colFin = colDepart + span;
+
+      // Trouver la première ligne libre (sans chevauchement de colonnes)
+      let ligne = 1;
+      while (true) {
+        const conflit = occupees.some(
+          o => o.ligne === ligne && colDepart < o.colFin && colFin > o.colDepart
+        );
+        if (!conflit) break;
+        ligne++;
+      }
+
+      lignes.set(e.id, ligne);
+      occupees.push({ colDepart, colFin, ligne });
+    }
+
+    return lignes;
+  }
+
+  /**
+   * Calcule le layout (top, height, left, width) pour les activités d'une journée
+   * afin que celles qui se chevauchent s'affichent côte-à-côte
+   */
+  function getLayoutForDay(dayDate: Date) {
+    const acts = getProgrammablesParDate(dayDate).filter(p => p.type === "activite") as ActiviteDTO[];
+    
+    const events = acts.map(p => {
+      const start = new Date(p.dateDepart);
+      const top = start.getHours() * 60 + start.getMinutes();
+      const height = p.dureeHeures * 60;
+      return { p, top, bottom: top + height, column: 0, width: 100, left: 0, height:height };
+    });
+
+    events.sort((a, b) => a.top - b.top || b.bottom - a.bottom);
+
+    const clusters: typeof events[] = [];
+    let currentCluster: typeof events = [];
+    let clusterEnd = 0;
+
+    events.forEach(ev => {
+      if (ev.top >= clusterEnd && currentCluster.length > 0) {
+        clusters.push(currentCluster);
+        currentCluster = [];
+      }
+      currentCluster.push(ev);
+      clusterEnd = Math.max(clusterEnd, ev.bottom);
+    });
+    if (currentCluster.length > 0) {
+      clusters.push(currentCluster);
+    }
+
+    clusters.forEach(cluster => {
+      const columns: typeof events[] = [];
+      
+      cluster.forEach(ev => {
+        let placed = false;
+        for (let i = 0; i < columns.length; i++) {
+          const lastEv = columns[i][columns[i].length - 1];
+          // On ajoute une petite marge pour le visuel, si les heures se touchent exactement on ne les met pas côté à côté
+          if (lastEv.bottom <= ev.top) { 
+            columns[i].push(ev);
+            ev.column = i;
+            placed = true;
+            break;
+          }
+        }
+        if (!placed) {
+          columns.push([ev]);
+          ev.column = columns.length - 1;
+        }
+      });
+
+      const maxCols = columns.length;
+      cluster.forEach(ev => {
+        ev.width = 100 / maxCols;
+        ev.left = ev.column * ev.width;
+      });
+    });
+
+    return events;
   }
 
   const days = getDays();
@@ -249,7 +400,13 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
                   <span className="day-number">{day}</span>
                   <div className="day-programmables">
                     {getProgrammablesParDate(new Date(year, month, day)).map((programmable) =>(
-                      <EventPill key={programmable.id} programmable={programmable} estVueSemaine={false} />
+                      <EventPill 
+                        key={programmable.id} 
+                        programmable={programmable} 
+                        estVueSemaine={false} 
+                        onClick={setSelectedItem}
+                        estEnConflit={estEnConflit(programmable.id)}
+                      />
                     ))}
                   </div>
                 </div>
@@ -277,21 +434,31 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
             <div className="week-all-day-row">
               <div className="time-gutter-header" />
               <div className="all-day-events-grid">
-                {getEvenementsSemaine().map(e => {
-                  const { colDepart, span } = calculerPositionEvenement(e);
+                {(() => {
+                  const evtsSemaine = getEvenementsSemaine();
+                  const lignes = assignerLignesEvenements(evtsSemaine);
+                  return evtsSemaine.map(e => {
+                    const { colDepart, span } = calculerPositionEvenement(e);
+                    const ligne = lignes.get(e.id) ?? 1;
 
-                  if (span <= 0) return null;
+                    if (span <= 0) return null;
 
-                  return (
-                    <div 
-                      key={e.id}
-                      className="all-day-event-wrapper"
-                      style={{ gridColumn: `${colDepart} / span ${span}` }}
-                    >
-                      <EventPill programmable={e} estVueSemaine={true} />
-                    </div>
-                  );
-                })}
+                    return (
+                      <div
+                        key={e.id}
+                        className="all-day-event-wrapper"
+                        style={{ gridColumn: `${colDepart} / span ${span}`, gridRow: ligne }}
+                      >
+                        <EventPill 
+                          programmable={e} 
+                          estVueSemaine={false} 
+                          onClick={setSelectedItem}
+                          estEnConflit={estEnConflit(e.id)}
+                        />
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             </div>
 
@@ -309,27 +476,28 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
                   {Array.from({ length: 24 }).map((_, h) => (
                     <div key={h} className="time-slot" />
                   ))}
-                  {getProgrammablesParDate(dayDate).filter(p => p.type === "activite").map((p) => {
-                    const start = new Date(p.dateDepart);
-                    const hour = start.getHours();
-                    const minutes = start.getMinutes();
-                    // 60px par heure, donc on calcule le top
-                    const top = hour * 60 + (minutes / 60) * 60;
-                    
-                    // On calcule la hauteur : activités utilisent dureeHeures, événements on met 30px par défaut
-                    const hauteur = p.type === "activite" ? p.dureeHeures * 60 : 30;
-
-                    return (
-                      <div 
-                        key={p.id} 
-                        className="week-event-wrapper"
-                        style={{ top: `${top}px`, height: `${hauteur}px` }}
-                      >
-                        <EventPill programmable={p} estVueSemaine={true} />
-                      </div>
-                    );
-                  })}
+                  {getLayoutForDay(dayDate).map(({ p, top, height, width, left }) => (
+                    <div 
+                      key={p.id} 
+                      className="week-event-wrapper"
+                      style={{ 
+                        top: `${top}px`, 
+                        height: `${height}px`,
+                        left: `calc(${left}% + 2px)`,
+                        width: `calc(${width}% - 4px)`,
+                        position: 'absolute'
+                      }}
+                    >
+                      <EventPill 
+                        programmable={p} 
+                        estVueSemaine={true} 
+                        onClick={setSelectedItem}
+                        estEnConflit={estEnConflit(p.id)}
+                      />
+                    </div>
+                  ))}
                 </div>
+
               ))}
             </div>
           </div>
@@ -362,6 +530,15 @@ export default function Calendar({ view }: { view: "month" | "week" }) {
           defaultDate={selectedDate}
           onClose={() => setShowModal(false)}
           onCreated={handleCreated}
+        />
+      )}
+
+      {selectedItem && (
+        <DetailProgrammableModal
+          programmable={selectedItem}
+          onFermer={() => setSelectedItem(null)}
+          onSupprime={handleDeleted}
+          onMisAJour={handleUpdated}
         />
       )}
 
