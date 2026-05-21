@@ -7,6 +7,7 @@ import ProfilePage, { profileAction } from "./pages/ProfilePage";
 import InvitationsPage, { invitationAction, invitationsLoader } from "./pages/InvitationsPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import { api } from "./services/api";
+import ContactPage from "./pages/ContactPage";
 
 async function requireAuthLoader() {
   try {
@@ -52,6 +53,7 @@ export const router = createBrowserRouter(
         <Route index element={<HomePage />} />
         <Route path="profile" element={<ProfilePage />} action={profileAction} />
         <Route path="invitations" element={<InvitationsPage />} loader={invitationsLoader} action={invitationAction} />
+        <Route path="contact" element={<ContactPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

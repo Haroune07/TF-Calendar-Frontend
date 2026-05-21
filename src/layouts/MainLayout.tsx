@@ -10,6 +10,8 @@ export default function MainLayout() {
           <Link to="/" className={styles.link}>Calendrier</Link>
           <Link to="/profile" className={styles.link}>Mon Profil</Link>
           <Link to="/invitations" className={styles.link}>Invitations</Link>
+          <Link to="/contact" className={styles.link}>Nous contacter</Link>
+
 
           <Form action="/logout" method="post" style={{ marginTop: 'auto' }}>
             <button type="submit" className={styles.logoutBtn}>

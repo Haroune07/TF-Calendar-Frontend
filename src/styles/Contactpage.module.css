@@ -1,0 +1,199 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.5rem;
+  padding: 2rem 0;
+}
+
+.card {
+  width: 100%;
+  max-width: 560px;
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 2.5rem;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.iconWrapper {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  background-color: rgba(37, 99, 235, 0.08);
+  color: var(--color-primary);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.title {
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--color-text-main);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.25rem;
+}
+
+.subtitle {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* Form */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.field label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-main);
+}
+
+.field textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-family: inherit;
+  line-height: 1.6;
+  resize: vertical;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+  background-color: var(--color-bg-card);
+  color: var(--color-text-main);
+}
+
+.field textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Footer row */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.note {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+  flex: 1;
+}
+
+.submitBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--color-primary);
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-md);
+  border: none;
+  white-space: nowrap;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.submitBtn:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.submitBtn:active {
+  transform: translateY(1px);
+}
+
+/* Confirmation state */
+.confirmation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.5rem 0;
+  gap: 0.75rem;
+}
+
+.confirmIcon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background-color: rgba(16, 185, 129, 0.12);
+  color: var(--color-success);
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirmTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text-main);
+}
+
+.confirmText {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  max-width: 380px;
+}
+
+.resetBtn {
+  margin-top: 0.5rem;
+  background: none;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-main);
+  font-size: 0.875rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius-md);
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.resetBtn:hover {
+  background-color: var(--color-bg-main);
+  border-color: #aaa;
+}
+
+/* Alt contact line below card */
+.altContact {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.email {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.email:hover {
+  text-decoration: underline;
+}
