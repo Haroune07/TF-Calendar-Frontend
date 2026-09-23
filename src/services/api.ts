@@ -61,6 +61,7 @@ export type ActiviteGroupeDTO = {
   type: "activite_groupe";
   dureeHeures: number;       
   priorite: "URGENT" | "IMPORTANCE_MOYENNE" | "IMPORTANCE_BASSE";
+  categorie?: CategorieProgrammable;
 
   participants?: UserDTO[];
 };

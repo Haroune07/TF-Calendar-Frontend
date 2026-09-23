@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { programmableApi, type CategorieProgrammable, type CreateActivitePayload, type CreateEvenementPayload, type ProgrammableDTO } from "../services/api";
+import { programmableApi, type CategorieProgrammable, type CreateActivitePayload, type ProgrammableDTO } from "../services/api";
 import styles from "../styles/CreateProgrammableModal.module.css";
-import { useRouteLoaderData } from "react-router-dom";
 import {api, type UserDTO} from "../services/api";
 import { useEffect } from "react";
 
@@ -27,7 +26,6 @@ export default function CreateProgrammable({ defaultDate, onClose, onCreated }: 
     const [categorie, setCategorie] = useState<CategorieProgrammable>("AUTRE");
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const user = useRouteLoaderData("root") as UserDTO;
     const [friends, setFriends] = useState<UserDTO[]>([]);
     const [selectedFriends, setSelectedFriends] = useState<number[]>([]);
 
