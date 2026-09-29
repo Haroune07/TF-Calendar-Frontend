@@ -28,8 +28,8 @@ function EventPill({ programmable, estVueSemaine, onClick, estEnConflit }: {
   estEnConflit?: boolean
 }) {
   const color =
-    programmable.categorie
-      ? CATEGORIETOCOLOR[programmable.categorie]
+    (programmable as any).categorie
+      ? CATEGORIETOCOLOR[(programmable as any).categorie]
       : programmable.type === "activite"
         ? PRIORITYTOCOLOR[programmable.priorite ?? "IMPORTANCE_MOYENNE"]
         : `hsl(${(programmable.nom.length * 40) % 360}, 60%, 50%)`;
